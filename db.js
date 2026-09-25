@@ -194,14 +194,27 @@ function bootstrap() {
 }
 
 // ── Readers ────────────────────────────────────────────────────────
-const readTeams   = () => readCSVFile(TEAMS_CSV,   TEAM_COLS);
-const readMembers = () => readCSVFile(MEMBERS_CSV, MEMBER_COLS);
+let defaultData = { teams: [], members: [], event: null };
+try { defaultData = require('./dataset'); } catch (e) {}
+
+const readTeams   = () => {
+  const rows = readCSVFile(TEAMS_CSV, TEAM_COLS);
+  if (rows && rows.length > 0) return rows;
+  return defaultData.teams || [];
+};
+const readMembers = () => {
+  const rows = readCSVFile(MEMBERS_CSV, MEMBER_COLS);
+  if (rows && rows.length > 0) return rows;
+  return defaultData.members || [];
+};
 const readEvent   = () => {
-  if (!fs.existsSync(EVENT_JSON)) return null;
-  try { return JSON.parse(fs.readFileSync(EVENT_JSON, 'utf8')); } catch { return null; }
+  if (fs.existsSync(EVENT_JSON)) {
+    try { return JSON.parse(fs.readFileSync(EVENT_JSON, 'utf8')); } catch {}
+  }
+  return defaultData.event || null;
 };
 
-bootstrap();
+try { bootstrap(); } catch (e) {}
 
 // ── Exported API ───────────────────────────────────────────────────
 module.exports = {

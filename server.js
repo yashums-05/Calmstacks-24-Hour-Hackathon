@@ -36,8 +36,11 @@ function getHtmlContent(fileName) {
   return null;
 }
 
+let embeddedPages = {};
+try { embeddedPages = require('./pages'); } catch (e) {}
+
 function sendHtml(res, fileName) {
-  const html = getHtmlContent(fileName);
+  const html = embeddedPages[fileName] || getHtmlContent(fileName);
   if (html) {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
