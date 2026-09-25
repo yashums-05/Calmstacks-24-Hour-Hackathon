@@ -16,6 +16,8 @@ const PUBLIC_DIR = fs.existsSync(path.join(__dirname, 'public'))
   : path.join(process.cwd(), 'public');
 
 // ── Helpers ────────────────────────────────────────────────────────
+const normalize = s => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
 function generateToken(user) {
   const ts = Date.now().toString();
   const data = `${user}:${ts}`;
@@ -96,50 +98,113 @@ app.get('/api/auth/me', (req, res) => {
 
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
-// ── Public APIs ────────────────────────────────────────────────────
-app.get('/api/event', (req, res) => res.json(db.getEvent() || {}));
+// ── Participant Member Specific Unlock & View ──────────────────────
+// Password verification: user must submit their registered name as password
+app.post('/api/members/:id/unlock', (req, res) => {
+  const result = db.getMember(req.params.id);
+  if (!result || !result.member) return res.status(404).json({ error: 'Participant not found' });
 
-app.get('/api/participants', (req, res) => {
-  const list = db.getTeams(req.query.search);
-  res.json({ participants: list, total: list.length });
-});
+  const input = normalize(req.body.name || req.body.password);
+  const expected = normalize(result.member.name);
 
-app.get('/api/participants/:id', (req, res) => {
-  const team = db.getTeam(req.params.id);
-  if (!team) return res.status(404).json({ error: 'Not found' });
-  const members = db.getMembersForTeam(team.id).map(m => ({
-    ...m,
-    profile_url: `${host(req)}/participants/${m.id}`,
-  }));
-  res.json({
-    participant: { ...team, profile_url: `${host(req)}/participants/${team.id}` },
-    members,
-    event: db.getEvent() || {},
-  });
-});
-
-app.get('/api/members', (req, res) => {
-  const list = db.getAllMembers(req.query.search);
-  res.json({ members: list, total: list.length });
+  if (isAuthenticated(req) || (input && input === expected)) {
+    return res.json({
+      success: true,
+      member: {
+        ...result.member,
+        profile_url: `${host(req)}/participants/${result.member.id}`,
+      },
+      team: result.team,
+      teammates: result.teammates.map(m => ({
+        ...m,
+        profile_url: `${host(req)}/participants/${m.id}`,
+      })),
+      event: result.event || {},
+    });
+  }
+  return res.status(401).json({ error: 'Incorrect password. Please enter the full name as registered.' });
 });
 
 app.get('/api/members/:id', (req, res) => {
   const result = db.getMember(req.params.id);
-  if (!result) return res.status(404).json({ error: 'Member not found' });
-  res.json({
-    ...result,
-    member: {
-      ...result.member,
-      profile_url: `${host(req)}/participants/${result.member.id}`,
-    },
-    teammates: result.teammates.map(m => ({
-      ...m,
-      profile_url: `${host(req)}/participants/${m.id}`,
-    })),
-  });
+  if (!result || !result.member) return res.status(404).json({ error: 'Member not found' });
+  
+  if (isAuthenticated(req)) {
+    return res.json({
+      ...result,
+      member: {
+        ...result.member,
+        profile_url: `${host(req)}/participants/${result.member.id}`,
+      },
+      teammates: result.teammates.map(m => ({
+        ...m,
+        profile_url: `${host(req)}/participants/${m.id}`,
+      })),
+    });
+  }
+  // Public without auth returns locked state (zero private data leaked)
+  return res.json({ locked: true, id: result.member.id });
 });
 
-// ── Admin Protected APIs ────────────────────────────────────────────
+// ── Team Specific Unlock & View ────────────────────────────────────
+app.post('/api/participants/:id/unlock', (req, res) => {
+  const team = db.getTeam(req.params.id);
+  if (!team) return res.status(404).json({ error: 'Team not found' });
+  const members = db.getMembersForTeam(team.id);
+
+  const input = normalize(req.body.name || req.body.password);
+  const allowedNames = [
+    team.lead_name,
+    team.member2,
+    team.member3,
+    team.member4,
+    ...members.map(m => m.name)
+  ].map(normalize).filter(Boolean);
+
+  if (isAuthenticated(req) || (input && allowedNames.includes(input))) {
+    return res.json({
+      success: true,
+      participant: { ...team, profile_url: `${host(req)}/participants/${team.id}` },
+      members: members.map(m => ({
+        ...m,
+        profile_url: `${host(req)}/participants/${m.id}`,
+      })),
+      event: db.getEvent() || {},
+    });
+  }
+  return res.status(401).json({ error: 'Incorrect password. Please enter the team lead or member name.' });
+});
+
+app.get('/api/participants/:id', (req, res) => {
+  const team = db.getTeam(req.params.id);
+  if (!team) return res.status(404).json({ error: 'Team not found' });
+  if (isAuthenticated(req)) {
+    const members = db.getMembersForTeam(team.id).map(m => ({
+      ...m,
+      profile_url: `${host(req)}/participants/${m.id}`,
+    }));
+    return res.json({
+      participant: { ...team, profile_url: `${host(req)}/participants/${team.id}` },
+      members,
+      event: db.getEvent() || {},
+    });
+  }
+  return res.json({ locked: true, id: team.id });
+});
+
+// ── Admin-Only Directory & Management APIs (No Public Access) ──────
+// Only Admin can view all teams and all members
+app.get('/api/participants', requireAdmin, (req, res) => {
+  const list = db.getTeams(req.query.search);
+  res.json({ participants: list, total: list.length });
+});
+
+app.get('/api/members', requireAdmin, (req, res) => {
+  const list = db.getAllMembers(req.query.search);
+  res.json({ members: list, total: list.length });
+});
+
+app.get('/api/event', (req, res) => res.json(db.getEvent() || {}));
 app.post('/api/event', requireAdmin, (req, res) => {
   if (!req.body.name) return res.status(400).json({ error: 'Event name required' });
   res.json(db.saveEvent(req.body));
@@ -193,10 +258,7 @@ app.get('/api/export', requireAdmin, (req, res) => {
 });
 
 // ── Pages & Direct Public Views ────────────────────────────────────
-// /participants route: serves main dashboard
-app.get('/participants', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
-
-// /participants/:id route: serves member.html if member id (-M) or member exists, else profile.html
+// Individual member / team profiles (Protected with participant's name as password)
 app.get('/participants/:id', (req, res) => {
   const id = req.params.id || '';
   if (id.includes('-M') || db.getMember(id)) {
@@ -205,25 +267,28 @@ app.get('/participants/:id', (req, res) => {
   return res.sendFile(path.join(PUBLIC_DIR, 'profile.html'));
 });
 
-// Short link routes
 app.get('/m/:id', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'member.html')));
 app.get('/p/:id', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'profile.html')));
 
-// Admin protected page
+// Admin Panel (Protected with yashu / Yashu@2005)
 app.get('/admin', requireAdmin, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin.html')));
 
-// Root home page
-app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
+// Root & All-participants list page (Admin Protected: only admin sees all data)
+app.get('/participants', requireAdmin, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
+app.get('/', (req, res) => {
+  if (isAuthenticated(req)) {
+    return res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+  }
+  return res.redirect('/login');
+});
 
 // Fallback
-app.use((req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
+app.use((req, res) => res.redirect('/login'));
 
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   app.listen(PORT, () => {
-    console.log(`\n✦ Hackathon Participant ID System`);
-    console.log(`  Dashboard    : http://localhost:${PORT}`);
-    console.log(`  Participants : http://localhost:${PORT}/participants`);
-    console.log(`  Admin        : http://localhost:${PORT}/admin`);
+    console.log(`\n✦ Hackathon Participant ID System (Admin Protected Directory)`);
+    console.log(`  Admin Panel  : http://localhost:${PORT}/admin`);
     console.log(`  Participant  : http://localhost:${PORT}/participants/:id`);
   });
 }

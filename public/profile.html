@@ -30,6 +30,14 @@
   .role-badge-m2  {background:rgba(236,72,153,.12);color:#f472b6}
   .role-badge-m3  {background:rgba(245,158,11,.12);color:#fbbf24}
   .role-badge-m4  {background:rgba(16,185,129,.12);color:#34d399}
+  .shake { animation: shake .35s ease; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-8px)}
+    40%{transform:translateX(8px)}
+    60%{transform:translateX(-5px)}
+    80%{transform:translateX(5px)}
+  }
   @media print{
     .no-print{display:none!important}
     body{background:#fff;color:#111}
@@ -42,21 +50,40 @@
 <body>
 <div style="background:linear-gradient(90deg,#6366f1,#8b5cf6,#ec4899);height:4px"></div>
 
-<div class="max-w-xl mx-auto px-4 py-8">
-  <div id="loading" class="text-center py-20 text-slate-500">
-    <div class="text-4xl mb-3 animate-pulse">⬡</div>
-    <p class="text-sm">Loading team profile…</p>
+<!-- PASSWORD GATE -->
+<div id="gate" class="fixed inset-0 bg-[#0f1117]/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
+  <div class="card w-full max-w-md p-8 text-center shadow-2xl border border-slate-700/60">
+    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center mx-auto mb-4 text-2xl">
+      🔒
+    </div>
+    <span class="text-[0.65rem] font-bold text-indigo-400 uppercase tracking-widest block mb-1">Protected Team Profile</span>
+    <h2 class="text-xl font-bold text-slate-100 mb-2">Team Verification</h2>
+    <p class="text-slate-400 text-xs mb-6">Enter the <strong>Team Lead or Member name</strong> as password to unlock this profile.</p>
+    
+    <div class="space-y-3">
+      <input id="gate-input" type="text" placeholder="Enter Lead / Member name..."
+        class="w-full bg-[#141824] border border-slate-700 rounded-xl px-4 py-3 text-sm text-center text-slate-100 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+        onkeydown="if(event.key==='Enter')tryUnlockTeam()" autofocus />
+      
+      <button onclick="tryUnlockTeam()" id="gate-btn"
+        class="w-full py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-95 transition-all">
+        Unlock Profile →
+      </button>
+    </div>
+    <p id="gate-err" class="text-red-400 text-xs mt-3 hidden"></p>
   </div>
+</div>
+
+<div class="max-w-xl mx-auto px-4 py-8">
   <div id="error-state" class="hidden text-center py-20">
     <div class="text-5xl mb-3">🔍</div>
     <h2 class="text-xl font-bold text-slate-100 mb-2">Team Not Found</h2>
     <p class="text-slate-500 text-sm mb-5">This team ID does not exist.</p>
-    <a href="/" class="inline-block px-5 py-2.5 rounded-xl font-semibold text-sm text-white no-print"
-       style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">← Dashboard</a>
+    <a href="/login" class="inline-block px-5 py-2.5 rounded-xl font-semibold text-sm text-white no-print"
+       style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">Sign In</a>
   </div>
 
   <div id="profile" class="hidden space-y-4">
-
     <!-- Header -->
     <div class="card overflow-hidden">
       <div class="h-28 relative" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
@@ -73,8 +100,7 @@
           <div class="no-print flex flex-col gap-2 shrink-0">
             <button onclick="window.print()"
               class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-100">🖨 Print</button>
-            <a href="/" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-100 text-center no-print">← Home</a>
-            <button onclick="handleLogout()" class="text-xs px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 text-center no-print">🚪 Logout</button>
+            <a href="/login" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-100 text-center no-print">Admin</a>
           </div>
         </div>
       </div>
@@ -132,74 +158,117 @@ const copyId = () => {
 };
 
 const id = location.pathname.split('/').filter(Boolean).pop().trim();
+const teamSessionKey = 'unlocked_team_' + id;
 
-fetch(`/api/participants/${id}`)
-  .then(async r => { if(!r.ok) throw new Error(); return r.json(); })
-  .then(({participant:p, members, event:ev}) => {
-    document.title = `${p.team_name} — Team Profile`;
+const renderTeam = ({ participant: p, members, event: ev }) => {
+  document.title = `${p.team_name} — Team Profile`;
 
-    document.getElementById('av').textContent = initials(p.lead_name);
-    document.getElementById('team-name').textContent = p.team_name;
-    document.getElementById('lead-name').textContent = `Lead: ${p.lead_name}`;
+  document.getElementById('av').textContent = initials(p.lead_name);
+  document.getElementById('team-name').textContent = p.team_name;
+  document.getElementById('lead-name').textContent = `Lead: ${p.lead_name}`;
 
-    const paid = p.payment_status;
-    document.getElementById('pills').innerHTML = [
-      paid==='PAID'   ? '<span class="pill" style="background:rgba(16,185,129,.15);color:#10b981">PAID</span>' : '',
-      paid==='PENDING'? '<span class="pill" style="background:rgba(239,68,68,.12);color:#ef4444">PENDING</span>' : '',
-      p.amount ? `<span class="pill" style="background:rgba(99,102,241,.15);color:#818cf8">${esc(p.amount)}</span>` : '',
-      p.team_size ? `<span class="pill" style="background:rgba(51,65,85,.8);color:#94a3b8">${esc(p.team_size.replace(/\s*\(.*?\)/,''))}</span>` : '',
-    ].join('');
+  const paid = p.payment_status;
+  document.getElementById('pills').innerHTML = [
+    paid==='PAID'   ? '<span class="pill" style="background:rgba(16,185,129,.15);color:#10b981">PAID</span>' : '',
+    paid==='PENDING'? '<span class="pill" style="background:rgba(239,68,68,.12);color:#ef4444">PENDING</span>' : '',
+    p.amount ? `<span class="pill" style="background:rgba(99,102,241,.15);color:#818cf8">${esc(p.amount)}</span>` : '',
+    p.team_size ? `<span class="pill" style="background:rgba(51,65,85,.8);color:#94a3b8">${esc(p.team_size.replace(/\s*\(.*?\)/,''))}</span>` : '',
+  ].join('');
 
-    document.getElementById('uid').textContent = p.id;
+  document.getElementById('uid').textContent = p.id;
 
-    // Members with individual IDs & links
-    document.getElementById('members').innerHTML = members.map(m => {
-      const rc = ROLE_CSS[m.role] || 'role-badge-lead';
-      return `
-        <a href="/m/${m.id}" class="member-link" style="text-decoration:none">
-          <div class="av w-10 h-10 rounded-xl text-sm shrink-0">${initials(m.name)}</div>
-          <div class="flex-1 min-w-0">
-            <p class="text-slate-100 font-semibold text-sm">${esc(m.name)}</p>
-            <p class="text-slate-500 text-xs font-mono">${esc(m.usn || '—')}</p>
-            <span class="member-id mt-0.5 inline-block">${m.id.slice(0,8)}…</span>
-          </div>
-          <div class="flex flex-col items-end gap-1.5 shrink-0">
-            <span class="pill ${rc}">${esc(m.role)}</span>
-            <span class="text-indigo-400 text-xs">View Profile →</span>
-          </div>
-        </a>`;
-    }).join('');
+  document.getElementById('members').innerHTML = members.map(m => {
+    const rc = ROLE_CSS[m.role] || 'role-badge-lead';
+    return `
+      <a href="/participants/${m.id}" class="member-link" style="text-decoration:none">
+        <div class="av w-10 h-10 rounded-xl text-sm shrink-0">${initials(m.name)}</div>
+        <div class="flex-1 min-w-0">
+          <p class="text-slate-100 font-semibold text-sm">${esc(m.name)}</p>
+          <p class="text-slate-500 text-xs font-mono">${esc(m.usn || '—')}</p>
+          <span class="member-id mt-0.5 inline-block">${m.id}</span>
+        </div>
+        <div class="flex flex-col items-end gap-1.5 shrink-0">
+          <span class="pill ${rc}">${esc(m.role)}</span>
+          <span class="text-indigo-400 text-xs">View Profile →</span>
+        </div>
+      </a>`;
+  }).join('');
 
-    document.getElementById('det').innerHTML = [
-      row('Email', p.email),
-      row('Phone', p.phone),
-      row('Year & Sem', p.year),
-      row('UTR / Transaction ID', p.utr),
-      row('Registered', p.registered_at),
-    ].join('');
+  document.getElementById('det').innerHTML = [
+    row('Email', p.email),
+    row('Phone', p.phone),
+    row('Year & Sem', p.year),
+    row('UTR / Transaction ID', p.utr),
+    row('Registered', p.registered_at),
+  ].join('');
 
-    document.getElementById('ev-det').innerHTML = [
-      row('Event Name', ev.name),
-      row('Type', ev.type),
-      row('Edition', ev.edition),
-      row('Venue', ev.venue),
-      row('Organizer', ev.organizer),
-      row('Start Date', fmtDate(ev.start_date)),
-      row('End Date',   fmtDate(ev.end_date)),
-      ev.description ? `<div class="col-span-2">${row('About',ev.description)}</div>` : '',
-    ].join('');
+  document.getElementById('ev-det').innerHTML = [
+    row('Event Name', ev.name),
+    row('Type', ev.type),
+    row('Edition', ev.edition),
+    row('Venue', ev.venue),
+    row('Organizer', ev.organizer),
+    row('Start Date', fmtDate(ev.start_date)),
+    row('End Date',   fmtDate(ev.end_date)),
+    ev.description ? `<div class="col-span-2">${row('About',ev.description)}</div>` : '',
+  ].join('');
 
-    document.getElementById('loading').classList.add('hidden');
-    document.getElementById('profile').classList.remove('hidden');
-  })
-  .catch(() => {
-    document.getElementById('loading').classList.add('hidden');
-    document.getElementById('error-state').classList.remove('hidden');
-  });
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('profile').classList.remove('hidden');
+};
 
-async function handleLogout() {
-  await fetch('/api/logout', { method: 'POST' });
-  window.location.href = '/login';
+const tryUnlockTeam = async () => {
+  const input = document.getElementById('gate-input');
+  const err   = document.getElementById('gate-err');
+  const btn   = document.getElementById('gate-btn');
+  const typed = input.value.trim();
+
+  if (!typed) {
+    err.textContent = 'Please enter team lead or member name.';
+    err.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+
+  try {
+    const res = await fetch(`/api/participants/${id}/unlock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: typed })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      sessionStorage.setItem(teamSessionKey, JSON.stringify(data));
+      err.classList.add('hidden');
+      renderTeam(data);
+    } else {
+      err.textContent = '✗ Incorrect name. Enter lead or member name.';
+      err.classList.remove('hidden');
+      input.classList.remove('shake');
+      void input.offsetWidth;
+      input.classList.add('shake');
+      input.select();
+    }
+  } catch (e) {
+    err.textContent = 'Verification error. Please try again.';
+    err.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Unlock Profile →';
+  }
+};
+
+// Check if already unlocked in this session
+const cachedTeam = sessionStorage.getItem(teamSessionKey);
+if (cachedTeam) {
+  try {
+    const data = JSON.parse(cachedTeam);
+    if (data && data.participant) renderTeam(data);
+  } catch (e) {
+    sessionStorage.removeItem(teamSessionKey);
+  }
 }
 </script>
 </body>

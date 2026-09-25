@@ -727,57 +727,103 @@ const dRow = (key, val, cls='') => {
 const memberId = location.pathname.split('/').filter(Boolean).pop().trim();
 const sessionKey = 'unlocked_' + memberId;
 
-let _memberName = '';
+const renderProfile = ({ member: m, team, teammates }) => {
+  document.title = `${m.name} — CalmStacks 24H 2026`;
 
-const tryUnlock = () => {
+  /* avatar */
+  const avEl = document.getElementById('av');
+  avEl.textContent = initials(m.name);
+  avEl.classList.add(ROLE_AV[m.role] || 'av-lead');
+
+  /* hero */
+  document.getElementById('member-name').textContent = m.name;
+  const usnClean = clean(m.usn);
+  document.getElementById('member-usn').textContent = usnClean ? 'USN: ' + usnClean : '';
+
+  /* IDs */
+  document.getElementById('uid').textContent        = m.id;
+  document.getElementById('member-url').textContent = m.profile_url || window.location.href;
+
+  /* Teammates */
+  if (team) {
+    const tName = document.getElementById('team-name');
+    if (tName) tName.textContent = team.team_name || '—';
+    const tSize = document.getElementById('team-size');
+    if (tSize) tSize.textContent = team.team_size || '';
+  }
+  if (teammates && teammates.length) {
+    const tmList = document.getElementById('teammates');
+    if (tmList) {
+      tmList.innerHTML = teammates.map(tm => {
+        const isSelf = tm.id === m.id;
+        return `<div class="teammate${isSelf ? ' self' : ''}">
+          <div class="tm-av ${ROLE_AV[tm.role] || 'av-lead'}">${initials(tm.name)}</div>
+          <div>
+            <div class="tm-name">${esc(tm.name)}${isSelf ? ' (You)' : ''}</div>
+            <div class="tm-usn">${esc(tm.role)}${tm.usn ? ' · ' + esc(tm.usn) : ''}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('profile').classList.remove('hidden');
+};
+
+const tryUnlock = async () => {
   const input = document.getElementById('gate-input');
   const err   = document.getElementById('gate-err');
-  const typed = input.value.trim().replace(/\s+/g, ' ');
-  const target = _memberName.trim().replace(/\s+/g, ' ');
-  if (typed && typed.toLowerCase() === target.toLowerCase()) {
-    sessionStorage.setItem(sessionKey, '1');
-    document.title = `${_memberName} — CalmStacks 24H 2026`;
-    document.getElementById('gate').classList.add('hidden');
-    err.classList.add('hidden');
-    document.getElementById('profile').classList.remove('hidden');
-  } else {
+  const btn   = document.querySelector('.gate-btn');
+  const typed = input.value.trim();
+
+  if (!typed) {
+    err.textContent = 'Please enter your full name.';
     err.classList.remove('hidden');
-    input.classList.remove('shake');
-    void input.offsetWidth;
-    input.classList.add('shake');
-    input.select();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+
+  try {
+    const res = await fetch(`/api/members/${memberId}/unlock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: typed })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      sessionStorage.setItem(sessionKey, JSON.stringify(data));
+      err.classList.add('hidden');
+      renderProfile(data);
+    } else {
+      err.textContent = '✗ Incorrect name. Please enter your full name as registered.';
+      err.classList.remove('hidden');
+      input.classList.remove('shake');
+      void input.offsetWidth;
+      input.classList.add('shake');
+      input.select();
+    }
+  } catch (e) {
+    err.textContent = 'Verification error. Please try again.';
+    err.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Unlock Profile →';
   }
 };
 
-fetch(`/api/members/${memberId}`)
-  .then(async r => { if(!r.ok) throw 0; return r.json(); })
-  .then(({ member:m, team }) => {
-    _memberName = m.name;
-
-    /* avatar */
-    const avEl = document.getElementById('av');
-    avEl.textContent = initials(m.name);
-    avEl.classList.add(ROLE_AV[m.role] || 'av-lead');
-
-    /* hero */
-    document.getElementById('member-name').textContent = m.name;
-    const usnClean = clean(m.usn);
-    document.getElementById('member-usn').textContent = usnClean ? 'USN: ' + usnClean : '';
-
-    /* IDs */
-    document.getElementById('uid').textContent        = m.id;
-    document.getElementById('member-url').textContent = m.profile_url;
-
-    /* already unlocked this browser session → skip gate */
-    if (sessionStorage.getItem(sessionKey)) {
-      document.title = `${m.name} — CalmStacks 24H 2026`;
-      document.getElementById('gate').classList.add('hidden');
-      document.getElementById('profile').classList.remove('hidden');
-    }
-    /* else gate stays — user must type their name */
-  })
-  .catch(() => {
-  });
+// Check if already unlocked in this browser session
+const cached = sessionStorage.getItem(sessionKey);
+if (cached) {
+  try {
+    const data = JSON.parse(cached);
+    if (data && data.member) renderProfile(data);
+  } catch (e) {
+    sessionStorage.removeItem(sessionKey);
+  }
+}
 </script>
 </body>
 </html>
