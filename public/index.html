@@ -6,83 +6,78 @@
 <title>CalmStacks 24-Hour Hackathon 2026 — Participant Portal</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background: #060608;
-    color: #f0f0f2;
+    background: #f8fafc;
+    color: #1e293b;
     min-height: 100vh;
   }
   .card {
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     border-radius: 1.25rem;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
   }
   .inp {
     width: 100%;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #f8fafc;
+    border: 1.5px solid #cbd5e1;
     border-radius: 0.75rem;
     padding: 0.85rem 1.25rem;
     font-size: 0.95rem;
-    color: #f0f0f2;
+    color: #0f172a;
+    font-weight: 600;
     outline: none;
     transition: all 0.2s;
   }
-  .inp::placeholder { color: #4b5563; }
+  .inp::placeholder { color: #94a3b8; }
   .inp:focus {
-    border-color: #2997ff;
-    box-shadow: 0 0 0 3px rgba(41, 151, 255, 0.15);
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    background: #ffffff;
   }
   .btn-primary {
-    background: #2997ff;
-    color: #000;
+    background: #0f172a;
+    color: #ffffff;
     font-weight: 700;
     transition: all 0.15s;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
   }
   .btn-primary:hover {
-    opacity: 0.9;
+    background: #1e293b;
     transform: translateY(-1px);
   }
   .btn-outline {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #94a3b8;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
     transition: all 0.15s;
   }
   .btn-outline:hover {
-    border-color: #2997ff;
-    color: #2997ff;
-  }
-  .glow {
-    position: absolute;
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(41, 151, 255, 0.08) 0%, rgba(139, 92, 246, 0.04) 50%, transparent 70%);
-    top: 20%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
+    border-color: #0f172a;
+    color: #0f172a;
+    background: #f1f5f9;
   }
 </style>
 </head>
 <body class="flex flex-col min-h-screen relative overflow-x-hidden">
-<div class="glow"></div>
 
 <!-- TOP HEADER -->
-<header style="background: rgba(6,6,8,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.07)"
-  class="sticky top-0 z-30 px-6 py-4 flex items-center justify-between">
+<header class="sticky top-0 z-30 px-6 py-4 flex items-center justify-between bg-white/90 backdrop-blur-md border-b border-slate-200">
   <div class="flex items-center gap-3">
-    <div class="w-8 h-8 rounded-lg bg-[#2997ff] flex items-center justify-center text-black font-black text-xs">
+    <div class="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white font-black text-xs shadow-sm">
       CS
     </div>
     <div>
-      <span class="font-bold text-sm text-slate-100 block leading-none">CalmStacks</span>
-      <span class="text-[0.68rem] text-slate-500 font-mono">24H Hackathon 2026</span>
+      <span class="font-black text-sm text-slate-900 block leading-none">CalmStacks</span>
+      <span class="text-[0.68rem] text-slate-500 font-mono font-semibold">24H Hackathon 2026</span>
     </div>
   </div>
   
   <div class="flex items-center gap-3">
-    <a href="/login" class="btn-outline text-xs px-4 py-2 rounded-full font-semibold flex items-center gap-1.5">
+    <a href="/login" class="btn-outline text-xs px-4 py-2 rounded-full font-bold flex items-center gap-1.5 shadow-sm">
       <span>🔐 Admin Login</span>
     </a>
   </div>
@@ -94,22 +89,22 @@
     
     <!-- Title -->
     <div>
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-400 text-xs font-mono font-semibold mb-4">
-        <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+      <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-sky-200 bg-sky-50 text-sky-700 text-xs font-mono font-bold mb-4">
+        <span class="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
         Digital Participant & Certificate System
       </div>
-      <h1 class="text-3xl sm:text-4xl font-black text-slate-100 tracking-tight leading-tight">
+      <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
         CalmStacks 24H Hackathon
       </h1>
-      <p class="text-slate-400 text-sm mt-3 max-w-md mx-auto leading-relaxed">
-        Access your verified digital participant record and certificate by entering your unique ID below.
+      <p class="text-slate-500 text-sm mt-3 max-w-md mx-auto leading-relaxed font-medium">
+        Enter your assigned Unique Participant ID or Team ID below to view your verified certificate record.
       </p>
     </div>
 
     <!-- Participant Lookup Card -->
-    <div class="card p-6 sm:p-8 text-left shadow-2xl backdrop-blur-xl">
-      <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest font-mono mb-2">Participant Portal</h2>
-      <p class="text-xs text-slate-500 mb-5">Enter your assigned ID (e.g. <span class="font-mono text-blue-400">HACK-003-M1</span> or <span class="font-mono text-indigo-400">HACK-003</span>)</p>
+    <div class="card p-6 sm:p-8 text-left">
+      <h2 class="text-xs font-black text-slate-700 uppercase tracking-widest font-mono mb-1">Participant Access</h2>
+      <p class="text-xs text-slate-500 mb-5 font-medium">Enter your assigned ID (e.g. <span class="font-mono font-bold text-sky-600">HACK-003-M1</span> or <span class="font-mono font-bold text-indigo-600">HACK-003</span>)</p>
 
       <form onsubmit="handleLookup(event)" class="space-y-4">
         <div>
@@ -120,26 +115,26 @@
         </button>
       </form>
 
-      <div class="mt-5 pt-4 border-t border-slate-800 text-center">
-        <p class="text-[0.72rem] text-slate-500">
+      <div class="mt-5 pt-4 border-t border-slate-100 text-center">
+        <p class="text-[0.75rem] text-slate-500 font-medium">
           🔒 Profiles are password protected. Your registered <strong>full name</strong> unlocks your details.
         </p>
       </div>
     </div>
 
     <!-- Event Meta Chips -->
-    <div class="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500 font-mono">
-      <span class="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/40">⚡ 24 Hours Offline</span>
-      <span class="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/40">📍 MCE, Hassan</span>
-      <span class="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/40">🏆 ₹50,000 Prize Pool</span>
+    <div class="flex flex-wrap items-center justify-center gap-2.5 text-xs text-slate-600 font-mono font-bold">
+      <span class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white shadow-sm">⚡ 24 Hours Offline</span>
+      <span class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white shadow-sm">📍 MCE, Hassan</span>
+      <span class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white shadow-sm">🏆 ₹50,000 Prize Pool</span>
     </div>
 
   </div>
 </main>
 
 <!-- FOOTER -->
-<footer class="py-6 text-center text-xs text-slate-600 border-t border-slate-900">
-  <p>CalmStacks 24H Hackathon 2026 &bull; Malnad College of Engineering</p>
+<footer class="py-6 text-center text-xs text-slate-500 border-t border-slate-200 font-medium bg-white">
+  <p>CalmStacks 24H Hackathon 2026 &bull; Malnad College of Engineering, Hassan</p>
 </footer>
 
 <script>

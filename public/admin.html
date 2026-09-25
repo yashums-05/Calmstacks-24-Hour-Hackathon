@@ -3,54 +3,56 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Admin — Hackathon ID System</title>
+<title>Admin — CalmStacks Hackathon ID System</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  body { font-family: 'Inter', system-ui, sans-serif; background: #0a0d14; color: #e2e8f0; }
-  ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+  body { font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; color: #1e293b; }
+  ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
   /* inputs */
-  .inp { width:100%; background:#111827; border:1px solid #1f2937; border-radius:.6rem;
-    padding:.55rem .9rem; font-size:.875rem; color:#e2e8f0; outline:none; transition:.15s; }
-  .inp::placeholder { color:#374151; }
-  .inp:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.15); }
-  select.inp option { background:#111827; }
+  .inp { width:100%; background:#ffffff; border:1.5px solid #cbd5e1; border-radius:.6rem;
+    padding:.55rem .9rem; font-size:.875rem; color:#0f172a; font-weight:600; outline:none; transition:.15s; }
+  .inp::placeholder { color:#94a3b8; }
+  .inp:focus { border-color:#0284c7; box-shadow:0 0 0 3px rgba(2,132,199,.15); }
+  select.inp option { background:#ffffff; color:#0f172a; }
   textarea.inp { resize:vertical; }
 
-  .lbl { display:block; font-size:.72rem; font-weight:700; color:#4b5563;
-    text-transform:uppercase; letter-spacing:.07em; margin-bottom:.3rem; }
+  .lbl { display:block; font-size:.72rem; font-weight:800; color:#475569;
+    text-transform:uppercase; letter-spacing:.07em; margin-bottom:.3rem; font-family:'JetBrains Mono',monospace; }
 
   /* buttons */
-  .btn { border:none; border-radius:.65rem; padding:.55rem 1.2rem; font-weight:600;
+  .btn { border:none; border-radius:.65rem; padding:.55rem 1.2rem; font-weight:700;
     font-size:.875rem; cursor:pointer; transition:all .15s; white-space:nowrap; }
-  .btn-primary { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; }
-  .btn-primary:hover { opacity:.9; transform:translateY(-1px); }
+  .btn-primary { background:#0f172a; color:#fff; }
+  .btn-primary:hover { background:#1e293b; transform:translateY(-1px); }
   .btn-primary:active { transform:scale(.97); }
-  .btn-outline { background:transparent; border:1px solid #1f2937; color:#6b7280; }
-  .btn-outline:hover { border-color:#6366f1; color:#e2e8f0; }
+  .btn-outline { background:#ffffff; border:1px solid #cbd5e1; color:#334155; }
+  .btn-outline:hover { border-color:#0f172a; color:#0f172a; background:#f1f5f9; }
   .btn-danger { background:transparent; border:1px solid rgba(239,68,68,.3); color:#ef4444; }
   .btn-danger:hover { background:rgba(239,68,68,.08); }
-  .btn-success { background:linear-gradient(135deg,#059669,#10b981); color:#fff; }
-  .btn-sm { padding:.3rem .75rem; font-size:.8rem; border-radius:.5rem; }
+  .btn-success { background:#16a34a; color:#fff; }
+  .btn-sm { padding:.35rem .85rem; font-size:.8rem; border-radius:.5rem; }
 
   /* cards */
-  .card { background:#111827; border:1px solid #1f2937; border-radius:1rem; }
-  .section-card { background:#0d1117; border:1px solid #161b22; border-radius:1rem; padding:1.5rem; }
+  .card { background:#ffffff; border:1px solid #e2e8f0; border-radius:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+  .section-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:1rem; padding:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.04); }
 
   /* sidebar nav */
   .nav-link { display:flex; align-items:center; gap:.75rem; padding:.6rem .9rem; border-radius:.65rem;
-    font-size:.875rem; font-weight:600; cursor:pointer; transition:.15s; color:#4b5563; }
-  .nav-link:hover { background:#111827; color:#e2e8f0; }
-  .nav-link.active { background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.2); }
+    font-size:.875rem; font-weight:700; cursor:pointer; transition:.15s; color:#64748b; }
+  .nav-link:hover { background:#f1f5f9; color:#0f172a; }
+  .nav-link.active { background:#f0f9ff; color:#0284c7; border:1px solid #bae6fd; }
   .nav-link .icon { font-size:1rem; width:1.25rem; text-align:center; }
 
   /* table */
   table { width:100%; border-collapse:collapse; }
-  th { background:#0d1117; color:#4b5563; font-size:.72rem; font-weight:700; text-transform:uppercase;
-    letter-spacing:.06em; padding:.65rem 1rem; text-align:left; border-bottom:1px solid #1f2937; }
-  td { padding:.65rem 1rem; font-size:.85rem; border-bottom:1px solid #0d1117;
-    color:#d1d5db; vertical-align:middle; }
-  tr:hover td { background:#111827; }
+  th { background:#f8fafc; color:#475569; font-size:.72rem; font-weight:800; text-transform:uppercase;
+    letter-spacing:.06em; padding:.75rem 1rem; text-align:left; border-bottom:1.5px solid #e2e8f0; font-family:'JetBrains Mono',monospace; }
+  td { padding:.75rem 1rem; font-size:.85rem; border-bottom:1px solid #f1f5f9;
+    color:#1e293b; vertical-align:middle; font-weight:500; }
+  tr:hover td { background:#f8fafc; }
   tr:last-child td { border-bottom:none; }
 
   /* pill */
@@ -58,56 +60,61 @@
     font-size:.68rem; font-weight:700; white-space:nowrap; }
 
   /* id mono */
-  .mono { font-family:'Courier New',monospace; font-size:.72rem; color:#818cf8; cursor:pointer; }
-  .mono:hover { color:#a5b4fc; }
+  .mono { font-family:'JetBrains Mono',monospace; font-size:.75rem; color:#0284c7; font-weight:700; cursor:pointer; }
+  .mono:hover { color:#0369a1; text-decoration:underline; }
 
   /* modal */
-  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.7); backdrop-filter:blur(8px);
+  .modal-bg { position:fixed; inset:0; background:rgba(15,23,42,.6); backdrop-filter:blur(8px);
     z-index:50; display:flex; align-items:center; justify-content:center; padding:1rem;
     animation:fi .18s ease; }
-  .modal-box { background:#111827; border:1px solid #1f2937; border-radius:1.25rem;
-    width:100%; max-width:640px; max-height:92vh; overflow-y:auto; animation:su .2s ease; }
+  .modal-box { background:#ffffff; border:1px solid #e2e8f0; border-radius:1.25rem;
+    width:100%; max-width:640px; max-height:92vh; overflow-y:auto; animation:su .2s ease; box-shadow:0 20px 40px rgba(0,0,0,0.2); }
   @keyframes fi { from{opacity:0} to{opacity:1} }
   @keyframes su { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
 
   /* toast */
-  .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:#111827; border:1px solid #1f2937;
+  .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:#0f172a; border:1px solid #334155;
     border-radius:.75rem; padding:.75rem 1.25rem; font-size:.875rem; z-index:100; animation:fi .2s ease;
-    box-shadow:0 8px 32px rgba(0,0,0,.5); }
-  .toast.ok  { border-color:#10b981; color:#10b981; }
-  .toast.err { border-color:#ef4444; color:#ef4444; }
-  .toast.info{ border-color:#6366f1; color:#818cf8; }
+    box-shadow:0 8px 32px rgba(0,0,0,.25); color:#fff; font-weight:600; }
+  .toast.ok  { border-color:#16a34a; color:#4ade80; }
+  .toast.err { border-color:#ef4444; color:#f87171; }
+  .toast.info{ border-color:#0284c7; color:#38bdf8; }
 
   /* success box */
-  .success-box { background:rgba(16,185,129,.05); border:1px solid rgba(16,185,129,.25);
-    border-radius:.75rem; padding:1.25rem; }
-  .url-chip { font-family:'Courier New',monospace; font-size:.75rem; background:rgba(16,185,129,.1);
-    color:#34d399; border:1px solid rgba(16,185,129,.25); border-radius:.5rem; padding:.4rem .7rem;
-    display:block; word-break:break-all; cursor:pointer; }
-  .id-chip { font-family:'Courier New',monospace; font-size:.75rem; background:rgba(99,102,241,.1);
-    color:#818cf8; border:1px solid rgba(99,102,241,.25); border-radius:.5rem; padding:.4rem .7rem;
-    display:block; word-break:break-all; cursor:pointer; }
+  .success-box { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:.75rem; padding:1.25rem; }
+  .url-chip { font-family:'JetBrains Mono',monospace; font-size:.75rem; background:#ffffff;
+    color:#15803d; border:1px solid #bbf7d0; border-radius:.5rem; padding:.4rem .7rem;
+    display:block; word-break:break-all; cursor:pointer; font-weight:600; }
+  .id-chip { font-family:'JetBrains Mono',monospace; font-size:.75rem; background:#f0f9ff;
+    color:#0284c7; border:1px solid #bae6fd; border-radius:.5rem; padding:.4rem .7rem;
+    display:block; word-break:break-all; cursor:pointer; font-weight:700; }
 
   /* section divider */
-  .divider { display:flex; align-items:center; gap:.75rem; color:#374151;
-    font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; margin:1.25rem 0; }
-  .divider::before,.divider::after { content:''; flex:1; height:1px; background:#1f2937; }
+  .divider { display:flex; align-items:center; gap:.75rem; color:#64748b;
+    font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.07em; margin:1.25rem 0; font-family:'JetBrains Mono',monospace; }
+  .divider::before,.divider::after { content:''; flex:1; height:1px; background:#e2e8f0; }
+
+  .dark-identity-lead {
+    font-weight: 800; color: #0f172a;
+  }
+  .dark-identity-usn {
+    font-family: 'JetBrains Mono', monospace; font-size: .72rem; font-weight: 700;
+    color: #0369a1; background: #f0f9ff; padding: 2px 6px; border-radius: 4px; border: 1px solid #bae6fd;
+  }
 </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
 <!-- TOP BAR -->
-<header style="background:#111827; border-bottom:1px solid #1f2937"
-  class="sticky top-0 z-20 px-6 py-3 flex items-center gap-4">
-  <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6)"
-    class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0">A</div>
+<header class="sticky top-0 z-20 px-6 py-3.5 flex items-center gap-4 bg-white border-b border-slate-200 shadow-sm">
+  <div class="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white font-black text-sm shrink-0">A</div>
   <div>
-    <span class="font-bold text-sm text-slate-100">Admin Panel</span>
-    <span class="text-slate-600 text-xs ml-2">Hackathon Participant ID System</span>
+    <span class="font-black text-sm text-slate-900">Admin Panel</span>
+    <span class="text-slate-500 text-xs ml-2 font-medium">CalmStacks 24H Hackathon ID System</span>
   </div>
   <div class="ml-auto flex items-center gap-3">
-    <span id="hdr-cnt" class="pill" style="background:rgba(99,102,241,.12);color:#818cf8">0 teams</span>
-    <a href="/" class="btn btn-outline btn-sm">👁 Public View</a>
+    <span id="hdr-cnt" class="pill" style="background:#f0f9ff;color:#0284c7;border:1px solid #bae6fd">0 teams</span>
+    <a href="/" class="btn btn-outline btn-sm">👁 Public Portal</a>
     <a href="/api/export" class="btn btn-outline btn-sm">⬇ Export JSON</a>
     <button onclick="handleLogout()" class="btn btn-danger btn-sm">🚪 Logout</button>
   </div>
@@ -116,8 +123,8 @@
 <div class="flex flex-1">
 
   <!-- SIDEBAR -->
-  <aside style="background:#0d1117; border-right:1px solid #161b22; width:220px; min-height:calc(100vh - 52px)"
-    class="shrink-0 p-4 flex flex-col gap-1 sticky top-[52px] self-start">
+  <aside class="shrink-0 p-4 flex flex-col gap-1 sticky top-[52px] self-start bg-white border-r border-slate-200"
+    style="width:220px; min-height:calc(100vh - 56px)">
     <button class="nav-link active" onclick="showSection('add',this)" id="nav-add">
       <span class="icon">➕</span> Add Team
     </button>
@@ -130,9 +137,9 @@
     <button class="nav-link" onclick="showSection('event',this)" id="nav-event">
       <span class="icon">⚙</span> Event Setup
     </button>
-    <div class="mt-auto pt-4 border-t border-slate-800">
-      <p class="text-slate-600 text-xs px-1">Database: CSV file</p>
-      <p class="text-slate-700 text-xs px-1 mt-1 font-mono">data/participants.csv</p>
+    <div class="mt-auto pt-4 border-t border-slate-100">
+      <p class="text-slate-400 text-xs px-1 font-semibold">CalmStacks Database</p>
+      <p class="text-slate-500 text-xs px-1 mt-0.5 font-mono">data/participants.csv</p>
     </div>
   </aside>
 
@@ -746,37 +753,37 @@ const loadTable = async () => {
     const teamMembers = membersByTeam[p.id] || [];
 
     const memberLinks = teamMembers.map(m => {
-      const dot = ROLE_DOT[m.role] || '#818cf8';
-      const url = `${location.origin}/m/${m.id}`;
+      const dot = ROLE_DOT[m.role] || '#0284c7';
+      const url = `${location.origin}/participants/${m.id}`;
       return `<a href="${url}" target="_blank"
-        class="flex items-center gap-1.5 text-xs no-underline group"
-        style="text-decoration:none;padding:.18rem 0">
+        class="flex items-center gap-1.5 text-xs no-underline group py-0.5"
+        style="text-decoration:none">
         <span style="width:6px;height:6px;border-radius:50%;background:${dot};flex-shrink:0;display:inline-block;"></span>
-        <span class="text-slate-300 group-hover:text-indigo-300 transition-colors" style="white-space:nowrap">${esc(m.name)}</span>
-        <span class="text-slate-600 font-mono" style="font-size:.65rem">${esc(m.usn||'')}</span>
-        <span class="text-indigo-500 group-hover:text-indigo-300 transition-colors ml-auto">↗</span>
+        <span class="dark-identity-lead group-hover:text-sky-600 transition-colors" style="white-space:nowrap">${esc(m.name)}</span>
+        ${m.usn ? `<span class="dark-identity-usn">${esc(m.usn)}</span>` : ''}
+        <span class="text-sky-500 group-hover:text-sky-700 transition-colors ml-auto text-[0.7rem] font-bold">↗</span>
       </a>`;
     }).join('');
 
     return `<tr>
       <td>
-        <p class="font-semibold text-slate-100 text-sm">${esc(p.team_name)}</p>
+        <p class="font-extrabold text-slate-900 text-sm">${esc(p.team_name)}</p>
         <p class="text-slate-500 text-xs mt-0.5">${esc(p.team_size || '—')}</p>
       </td>
       <td>
-        <p class="text-slate-200 text-sm">${esc(p.lead_name)}</p>
-        <p class="text-slate-500 text-xs font-mono mt-0.5">${esc(p.usn || '—')}</p>
+        <p class="dark-identity-lead text-sm">${esc(p.lead_name)}</p>
+        ${p.usn ? `<p class="dark-identity-usn mt-1 inline-block">${esc(p.usn)}</p>` : ''}
       </td>
-      <td style="min-width:200px">
-        <div class="space-y-0.5">${memberLinks || '<span class="text-slate-600 text-xs">Solo</span>'}</div>
+      <td style="min-width:220px">
+        <div class="space-y-1">${memberLinks || '<span class="text-slate-400 text-xs font-semibold">Solo</span>'}</div>
       </td>
-      <td class="text-slate-400 text-xs">${esc(p.year || '—')}</td>
+      <td class="text-slate-600 text-xs font-semibold">${esc(p.year || '—')}</td>
       <td>
         ${payBadge}
-        ${p.amount ? `<p class="text-slate-500 text-xs mt-1">${esc(p.amount)}</p>` : ''}
+        ${p.amount ? `<p class="text-slate-500 text-xs font-bold mt-1">${esc(p.amount)}</p>` : ''}
       </td>
       <td>
-        <span class="mono" onclick="cp('${p.id}','ID')" title="Click to copy">${p.id.slice(0,8)}…</span>
+        <span class="mono" onclick="cp('${p.id}','ID')" title="Click to copy">${p.id}</span>
       </td>
       <td>
         <div class="flex gap-1.5">

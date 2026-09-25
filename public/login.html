@@ -3,101 +3,90 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Sign In — Hackathon ID System</title>
+<title>Admin Sign In — CalmStacks Hackathon</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background: #0a0d14;
-    color: #e2e8f0;
+    background: #f8fafc;
+    color: #1e293b;
+    min-height: 100vh;
   }
   .inp {
     width: 100%;
-    background: #111827;
-    border: 1px solid #1f2937;
-    border-radius: 0.65rem;
-    padding: 0.7rem 1rem;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
     font-size: 0.9rem;
-    color: #e2e8f0;
+    color: #0f172a;
+    font-weight: 600;
     outline: none;
     transition: all 0.2s ease;
   }
-  .inp::placeholder { color: #4b5563; }
+  .inp::placeholder { color: #94a3b8; }
   .inp:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-    background: #131d31;
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
   }
   .btn-primary {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: #0f172a;
     color: #fff;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
   }
   .btn-primary:hover {
-    opacity: 0.95;
+    background: #1e293b;
     transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.15);
   }
   .btn-primary:active {
     transform: scale(0.98);
   }
-  .glow-bg {
-    position: absolute;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.05) 50%, transparent 70%);
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    z-index: 0;
-  }
 </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-<div class="glow-bg"></div>
+<body class="min-h-screen flex items-center justify-center p-4 bg-slate-50">
 
-<div class="w-full max-w-md relative z-10">
-  <div style="background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(16px); border: 1px solid #1f2937;" class="rounded-2xl p-8 shadow-2xl">
+<div class="w-full max-w-md">
+  <div class="bg-white border border-slate-200 rounded-2xl p-8 shadow-xl">
     
     <!-- Logo & Title -->
     <div class="text-center mb-8">
-      <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6);" class="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-indigo-500/20 mb-4">
-        H
+      <div class="w-14 h-14 rounded-2xl bg-slate-900 mx-auto flex items-center justify-center text-white font-black text-xl shadow-lg mb-4">
+        CS
       </div>
-      <h1 class="text-2xl font-bold text-slate-100 tracking-tight">Hackathon Portal</h1>
-      <p class="text-slate-400 text-xs mt-1.5">Sign in to access Public & Admin Views</p>
+      <h1 class="text-2xl font-black text-slate-900 tracking-tight">Admin Portal</h1>
+      <p class="text-slate-500 text-xs mt-1.5 font-medium">CalmStacks 24H Hackathon Organizer Access</p>
     </div>
 
     <!-- Alert Box -->
-    <div id="alert-box" class="hidden mb-5 p-3.5 rounded-xl border text-xs font-medium transition-all"></div>
+    <div id="alert-box" class="hidden mb-5 p-3.5 rounded-xl border text-xs font-bold transition-all"></div>
 
     <!-- Login Form -->
     <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
       <div>
-        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">User ID</label>
-        <input id="userid" type="text" class="inp" placeholder="Enter user ID" autocomplete="username" required autofocus />
+        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 font-mono">User ID</label>
+        <input id="userid" type="text" class="inp" placeholder="Enter admin user ID" autocomplete="username" required autofocus />
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Password</label>
+        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 font-mono">Password</label>
         <div class="relative">
           <input id="password" type="password" class="inp pr-10" placeholder="Enter password" autocomplete="current-password" required />
-          <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-sm focus:outline-none">
+          <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm focus:outline-none">
             👁
           </button>
         </div>
       </div>
 
-      <button id="submit-btn" type="submit" class="btn-primary w-full py-3 rounded-xl font-bold text-sm mt-2 flex items-center justify-center gap-2">
-        <span>Sign In</span>
+      <button id="submit-btn" type="submit" class="btn-primary w-full py-3.5 rounded-xl font-bold text-sm mt-2 flex items-center justify-center gap-2">
+        <span>Sign In to Admin Panel</span>
       </button>
     </form>
     
-    <div class="mt-6 pt-5 border-t border-slate-800/80 text-center">
-      <p class="text-xs text-slate-500">
-        Secured Access &bull; Participant & Admin Portal
-      </p>
+    <div class="mt-6 pt-5 border-t border-slate-100 text-center">
+      <a href="/" class="text-xs text-sky-600 hover:underline font-bold">← Back to Public Portal</a>
     </div>
   </div>
 </div>
@@ -110,10 +99,10 @@ function togglePassword() {
 
 function showAlert(msg, isError = true) {
   const box = document.getElementById('alert-box');
-  box.className = `mb-5 p-3.5 rounded-xl border text-xs font-medium transition-all ${
+  box.className = `mb-5 p-3.5 rounded-xl border text-xs font-bold transition-all ${
     isError 
-      ? 'bg-red-500/10 border-red-500/30 text-red-400' 
-      : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+      ? 'bg-rose-50 border-rose-200 text-rose-600' 
+      : 'bg-emerald-50 border-emerald-200 text-emerald-600'
   }`;
   box.textContent = msg;
   box.classList.remove('hidden');
@@ -140,7 +129,7 @@ async function handleLogin(e) {
 
     const data = await res.json();
     if (res.ok && data.success) {
-      showAlert('Signed in successfully! Redirecting...', false);
+      showAlert('Signed in successfully! Redirecting to Admin Panel...', false);
       const urlParams = new URLSearchParams(window.location.search);
       const redirect = urlParams.get('redirect') || '/admin';
       setTimeout(() => {
@@ -149,12 +138,12 @@ async function handleLogin(e) {
     } else {
       showAlert(data.error || 'Invalid user ID or password.');
       btn.disabled = false;
-      btn.innerHTML = `<span>Sign In</span>`;
+      btn.innerHTML = `<span>Sign In to Admin Panel</span>`;
     }
   } catch (err) {
     showAlert('Network error. Please try again.');
     btn.disabled = false;
-    btn.innerHTML = `<span>Sign In</span>`;
+    btn.innerHTML = `<span>Sign In to Admin Panel</span>`;
   }
 }
 </script>

@@ -5,488 +5,335 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Participant — CalmStacks 24H Hackathon 2026</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
-  background: #060608;
-  color: #f0f0f2;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #f8fafc;
+  color: #1e293b;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
-/* ── subtle grid bg ── */
+/* Subtle background grid */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 56px 56px;
+    linear-gradient(rgba(15,23,42,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15,23,42,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
   pointer-events: none;
   z-index: 0;
 }
-.orb {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(130px);
-  pointer-events: none;
-  z-index: 0;
-}
-.orb-1 { width: 500px; height: 500px; top: -150px; right: -80px; background: rgba(41,151,255,0.06); }
-.orb-2 { width: 350px; height: 350px; bottom: 5%; left: -80px; background: rgba(100,60,200,0.05); }
 
-/* ── accent bar ── */
+/* Top Accent Bar */
 .accent-bar {
-  height: 2px;
-  background: linear-gradient(90deg, #2997ff, #5ac8fa, #a78bfa, #2997ff);
+  height: 3px;
+  background: linear-gradient(90deg, #0284c7, #6366f1, #a855f7, #0284c7);
   background-size: 300% 100%;
   animation: shimmer 4s linear infinite;
-  position: relative; z-index: 10;
+  position: relative; z-index: 20;
 }
 @keyframes shimmer { to { background-position: -300% 0; } }
 
-/* ── header ── */
+/* Site Header */
 .site-header {
   position: sticky; top: 0; z-index: 50;
-  background: rgba(6,6,8,0.88);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.85rem 1.5rem;
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
 }
 .brand { display: flex; align-items: center; gap: .65rem; text-decoration: none; }
 .brand-dot {
-  width: 30px; height: 30px; border-radius: 8px;
-  background: #2997ff;
+  width: 32px; height: 32px; border-radius: 8px;
+  background: #0f172a;
   display: flex; align-items: center; justify-content: center;
-  font-family: 'JetBrains Mono', monospace; font-size: .72rem; font-weight: 700;
-  color: #000; flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace; font-size: .75rem; font-weight: 800;
+  color: #fff; flex-shrink: 0;
 }
 .brand-text {
   font-family: 'JetBrains Mono', monospace;
-  font-size: .68rem; font-weight: 700;
-  letter-spacing: .14em; text-transform: uppercase; color: #f0f0f2;
+  font-size: .75rem; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase; color: #0f172a;
 }
 .header-right { display: flex; gap: .5rem; align-items: center; }
 .hbtn {
-  font-family: 'JetBrains Mono', monospace; font-size: .62rem; font-weight: 600;
+  font-family: 'JetBrains Mono', monospace; font-size: .65rem; font-weight: 700;
   letter-spacing: .06em; text-transform: uppercase;
-  padding: .35rem .85rem; border-radius: 999px; cursor: pointer; transition: all .15s;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.04); color: #888;
+  padding: .4rem .9rem; border-radius: 999px; cursor: pointer; transition: all .15s;
+  border: 1px solid #cbd5e1;
+  background: #ffffff; color: #475569;
   text-decoration: none; display: inline-block;
 }
-.hbtn:hover { border-color: rgba(41,151,255,0.4); color: #2997ff; }
+.hbtn:hover { border-color: #0f172a; color: #0f172a; background: #f1f5f9; }
 
-/* ── page wrapper ── */
+/* Page wrapper */
 .wrapper {
   position: relative; z-index: 1;
-  max-width: 640px; margin: 0 auto;
-  padding: 2.5rem 1.25rem 6rem;
+  max-width: 660px; margin: 0 auto;
+  padding: 2rem 1.25rem 5rem;
 }
 
-
-
-/* ── hero ── */
-.hero-wrap { margin-bottom: 2rem; }
-
-.hero-banner {
-  height: 90px; border-radius: 1rem 1rem 0 0;
-  background: #0a0c12;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-bottom: none;
-  position: relative; overflow: hidden;
-  display: flex; align-items: center; padding: 0 1.5rem;
-}
-.hero-banner::after {
-  content: '';
-  position: absolute; inset: 0;
-  background-image:
-    linear-gradient(rgba(41,151,255,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(41,151,255,0.05) 1px, transparent 1px);
-  background-size: 28px 28px;
-  pointer-events: none;
-}
-.banner-text {
-  position: relative; z-index: 1;
-  display: flex; flex-direction: column; gap: .25rem;
-}
-.banner-sub {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: .6rem; font-weight: 600;
-  letter-spacing: .14em; text-transform: uppercase;
-  color: #2997ff; display: flex; align-items: center; gap: .5rem;
-}
-.live-dot {
-  width: 6px; height: 6px; border-radius: 50%; background: #2997ff;
-  animation: ping 1.8s ease-in-out infinite;
-  display: inline-block;
-}
-@keyframes ping {
-  0%,100% { box-shadow: 0 0 0 0 rgba(41,151,255,0.7); }
-  50% { box-shadow: 0 0 0 7px rgba(41,151,255,0); }
-}
-.banner-title {
-  font-size: 1rem; font-weight: 800;
-  letter-spacing: -.01em; color: rgba(255,255,255,0.85);
-}
-
-.hero-body {
-  background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-top: none;
-  border-radius: 0 0 1rem 1rem;
-  padding: 1.75rem;
-  display: flex; align-items: flex-start; gap: 1.25rem;
-}
-.av {
-  width: 64px; height: 64px; border-radius: .85rem; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.4rem; font-weight: 700; border: 2px solid;
-}
-.av-lead { background: rgba(41,151,255,0.12); border-color: rgba(41,151,255,0.3); color: #2997ff; }
-.av-m2   { background: rgba(244,114,182,0.12); border-color: rgba(244,114,182,0.3); color: #f472b6; }
-.av-m3   { background: rgba(251,191,36,0.12); border-color: rgba(251,191,36,0.3); color: #fbbf24; }
-.av-m4   { background: rgba(52,211,153,0.12); border-color: rgba(52,211,153,0.3); color: #34d399; }
-
-.hero-text { flex: 1; }
-.hero-name {
-  font-size: 1.5rem; font-weight: 800;
-  letter-spacing: -.02em; color: #f5f5f7; line-height: 1.2;
-  margin-bottom: .3rem;
-}
-.hero-usn {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: .75rem; color: #555; letter-spacing: .05em;
-  margin-bottom: .65rem;
-}
-.tags { display: flex; flex-wrap: wrap; gap: .35rem; }
-.tag {
-  display: inline-flex; align-items: center; gap: .25rem;
-  padding: .2rem .65rem; border-radius: 999px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: .63rem; font-weight: 700;
-  letter-spacing: .04em; text-transform: uppercase;
-  border: 1px solid;
-}
-.tag-blue   { background: rgba(41,151,255,0.1); color: #2997ff; border-color: rgba(41,151,255,0.25); }
-.tag-pink   { background: rgba(244,114,182,0.1); color: #f472b6; border-color: rgba(244,114,182,0.25); }
-.tag-amber  { background: rgba(251,191,36,0.1); color: #fbbf24; border-color: rgba(251,191,36,0.25); }
-.tag-green  { background: rgba(52,211,153,0.1); color: #34d399; border-color: rgba(52,211,153,0.25); }
-.tag-muted  { background: rgba(255,255,255,0.04); color: #888; border-color: rgba(255,255,255,0.1); }
-.tag-paid   { background: rgba(52,211,153,0.1); color: #34d399; border-color: rgba(52,211,153,0.25); }
-.tag-pending{ background: rgba(251,191,36,0.1); color: #fbbf24; border-color: rgba(251,191,36,0.25); }
-
-/* ── section ── */
+/* Sections */
 .section { margin-bottom: 1.75rem; }
 .section-label {
   font-family: 'JetBrains Mono', monospace;
-  font-size: .6rem; font-weight: 700;
-  letter-spacing: .14em; text-transform: uppercase;
-  color: #444; margin-bottom: 1rem;
+  font-size: .65rem; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: #64748b; margin-bottom: 0.85rem;
   display: flex; align-items: center; gap: .6rem;
 }
-.section-label::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+.section-label::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
 
-/* ── ID / URL card ── */
-.id-card {
-  background: rgba(41,151,255,0.06);
-  border: 1px solid rgba(41,151,255,0.18);
-  border-radius: .85rem;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: .75rem;
-  cursor: pointer; transition: background .15s;
+/* ── DARK IDENTITY CARD (NAME & USN) ── */
+.dark-identity-card {
+  background: linear-gradient(135deg, #090d16 0%, #0f172a 100%);
+  border: 1px solid #1e293b;
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  box-shadow: 0 12px 32px -4px rgba(15, 23, 42, 0.25), 0 4px 12px rgba(15, 23, 42, 0.15);
+  display: flex; align-items: center; gap: 1.25rem;
+  color: #ffffff;
+  position: relative; overflow: hidden;
+  margin-bottom: 1.75rem;
 }
-.id-card:hover { background: rgba(41,151,255,0.1); }
+.dark-identity-card::after {
+  content: '';
+  position: absolute; right: -20px; bottom: -20px;
+  width: 140px; height: 140px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.dark-av {
+  width: 64px; height: 64px; border-radius: 1rem; flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.4rem; font-weight: 800;
+  color: #38bdf8;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.dark-identity-text { flex: 1; min-width: 0; }
+.dark-identity-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .62rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .12em;
+  color: #38bdf8; margin-bottom: .25rem;
+  display: flex; align-items: center; gap: .4rem;
+}
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8; display: inline-block;
+}
+.dark-identity-name {
+  font-size: 1.6rem; font-weight: 900;
+  letter-spacing: -.02em; color: #ffffff; line-height: 1.2;
+  margin-bottom: .45rem; word-break: break-word;
+}
+.dark-identity-usn {
+  display: inline-flex; align-items: center; gap: .4rem;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: .3rem .75rem; border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .8rem; font-weight: 700;
+  color: #7dd3fc; letter-spacing: .05em;
+}
+
+/* Light Card Shell */
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+/* ID & URL Cards */
+.id-card {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: .85rem;
+  padding: 1.1rem 1.35rem;
+  margin-bottom: .75rem;
+  cursor: pointer; transition: all .15s;
+}
+.id-card:hover { border-color: #0284c7; transform: translateY(-1px); }
 .id-card-label {
   font-family: 'JetBrains Mono', monospace;
-  font-size: .58rem; font-weight: 700;
-  letter-spacing: .12em; text-transform: uppercase;
-  color: rgba(41,151,255,0.6); margin-bottom: .5rem;
+  font-size: .62rem; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: #0369a1; margin-bottom: .35rem;
 }
 .id-card-value {
   font-family: 'JetBrains Mono', monospace;
-  font-size: .82rem; color: #2997ff;
-  word-break: break-all; line-height: 1.5;
+  font-size: .9rem; font-weight: 700; color: #0284c7;
+  word-break: break-all;
 }
+
 .url-card {
-  background: rgba(52,211,153,0.05);
-  border: 1px solid rgba(52,211,153,0.15);
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
   border-radius: .85rem;
-  padding: 1.25rem 1.5rem;
-  cursor: pointer; transition: background .15s;
+  padding: 1.1rem 1.35rem;
+  cursor: pointer; transition: all .15s;
 }
-.url-card:hover { background: rgba(52,211,153,0.09); }
-.url-card .id-card-label { color: rgba(52,211,153,0.6); }
-.url-card .id-card-value { color: #34d399; }
+.url-card:hover { border-color: #16a34a; transform: translateY(-1px); }
+.url-card .id-card-label { color: #15803d; }
+.url-card .id-card-value { color: #16a34a; }
 
-/* ── detail list (spacious single-col) ── */
-.detail-list { display: flex; flex-direction: column; gap: 0; }
-.detail-row {
-  display: flex; justify-content: space-between; align-items: baseline;
-  padding: .9rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  gap: 1rem;
-}
-.detail-row:last-child { border-bottom: none; }
-.dr-key {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: .62rem; font-weight: 700;
-  letter-spacing: .1em; text-transform: uppercase;
-  color: #444; flex-shrink: 0; min-width: 110px;
-}
-.dr-val {
-  font-size: .9rem; font-weight: 500;
-  color: #d0d0d5; text-align: right; flex: 1;
-}
-.dr-val.mono { font-family: 'JetBrains Mono', monospace; font-size: .8rem; }
-.dr-val.accent { color: #2997ff; }
-.dr-val.green-val { color: #34d399; }
-.dr-val.gold-val { color: #fbbf24; font-weight: 700; }
-
-/* ── info card shell ── */
-.card {
-  background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 1rem;
-  overflow: hidden;
-}
-.card-head {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  display: flex; align-items: center; justify-content: space-between;
-}
-.card-title {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: .62rem; font-weight: 700;
-  letter-spacing: .1em; text-transform: uppercase; color: #555;
-}
-.card-body { padding: 0 1.5rem; }
-.card-body-pad { padding: 1.5rem; }
-
-/* ── team block ── */
-.team-block {
-  padding: 1.25rem;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: .85rem;
-  display: flex; align-items: center; gap: 1rem;
-  margin-bottom: 1.25rem;
-}
-.team-av {
-  width: 44px; height: 44px; border-radius: .6rem; flex-shrink: 0;
-  background: rgba(41,151,255,0.1); border: 1px solid rgba(41,151,255,0.2);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'JetBrains Mono', monospace; font-size: .9rem; font-weight: 700; color: #2997ff;
-}
-.team-name { font-size: .975rem; font-weight: 700; color: #f0f0f2; margin-bottom: .2rem; }
-.team-size { font-size: .8rem; color: #555; }
-
-/* ── teammate list ── */
-.teammate-list { display: flex; flex-direction: column; gap: .5rem; }
-.teammate {
-  display: flex; align-items: center; gap: .9rem;
-  padding: .85rem 1rem;
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: .75rem;
-  background: rgba(255,255,255,0.02);
-  text-decoration: none; transition: all .15s;
-}
-.teammate:hover { border-color: rgba(41,151,255,0.3); background: rgba(41,151,255,0.04); transform: translateX(3px); }
-.teammate.self { border-color: rgba(41,151,255,0.3); background: rgba(41,151,255,0.07); }
-.tm-av {
-  width: 38px; height: 38px; border-radius: .55rem; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'JetBrains Mono', monospace; font-size: .8rem; font-weight: 700;
-}
-.tm-name { font-size: .9rem; font-weight: 600; color: #e0e0e4; }
-.tm-usn  { font-family: 'JetBrains Mono', monospace; font-size: .67rem; color: #555; margin-top: .15rem; }
-.tm-right { margin-left: auto; flex-shrink: 0; }
-
-/* ── event hero ── */
+/* Event Hero */
 .event-hero {
-  border: 1px solid rgba(41,151,255,0.2);
+  border: 1px solid #e2e8f0;
   border-radius: 1rem;
-  padding: 2rem;
-  background: rgba(41,151,255,0.04);
-  margin-bottom: 1.75rem;
+  padding: 1.75rem;
+  background: #ffffff;
+  margin-bottom: 1.5rem;
   position: relative; overflow: hidden;
-}
-.event-hero::after {
-  content: '24H';
-  position: absolute; right: 1.5rem; bottom: 1rem;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 4.5rem; font-weight: 900;
-  color: rgba(41,151,255,0.05); line-height: 1;
-  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 .ev-eyebrow {
   font-family: 'JetBrains Mono', monospace;
-  font-size: .58rem; font-weight: 700;
-  letter-spacing: .14em; text-transform: uppercase;
-  color: #2997ff; margin-bottom: .65rem;
+  font-size: .62rem; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: #0284c7; margin-bottom: .4rem;
 }
 .ev-big-title {
-  font-size: 1.25rem; font-weight: 800;
-  color: #f5f5f7; letter-spacing: -.01em;
-  margin-bottom: 1.25rem; line-height: 1.3;
+  font-size: 1.3rem; font-weight: 800;
+  color: #0f172a; letter-spacing: -.02em;
+  margin-bottom: 1rem; line-height: 1.3;
 }
 .ev-chips { display: flex; flex-wrap: wrap; gap: .45rem; }
 .ec {
   font-family: 'JetBrains Mono', monospace;
-  font-size: .62rem; font-weight: 600;
-  letter-spacing: .04em; text-transform: uppercase;
-  padding: .35rem .8rem; border-radius: .5rem;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.04); color: #888;
+  font-size: .65rem; font-weight: 700;
+  padding: .35rem .75rem; border-radius: .5rem;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc; color: #475569;
 }
-.ec-blue { border-color: rgba(41,151,255,0.3); color: #2997ff; background: rgba(41,151,255,0.08); }
-.ec-gold { border-color: rgba(251,191,36,0.3); color: #fbbf24; background: rgba(251,191,36,0.07); }
+.ec-blue { background: #f0f9ff; border-color: #bae6fd; color: #0284c7; }
+.ec-gold { background: #fefce8; border-color: #fef08a; color: #ca8a04; font-weight: 800; }
 
-/* ── event 2-col info blocks ── */
+/* Event Grid */
 .ev-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: .65rem;
+  display: grid; grid-template-columns: 1fr 1fr; gap: .65rem;
+  margin-bottom: 1.5rem;
 }
-@media (max-width: 440px) { .ev-grid { grid-template-columns: 1fr; } }
 .ev-block {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: .85rem;
   padding: 1rem 1.1rem;
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: .75rem;
-  background: rgba(255,255,255,0.02);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
 }
+.ev-block.span2 { grid-column: span 2; }
 .ev-block-label {
   font-family: 'JetBrains Mono', monospace;
-  font-size: .58rem; font-weight: 700;
-  letter-spacing: .1em; text-transform: uppercase;
-  color: #444; margin-bottom: .4rem;
+  font-size: .6rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: #64748b; margin-bottom: .25rem;
 }
-.ev-block-val {
-  font-size: .9rem; font-weight: 600; color: #d0d0d5;
-}
-.ev-block-val.blue { color: #2997ff; }
-.ev-block-val.green { color: #34d399; }
-.ev-block-val.gold { color: #fbbf24; font-size: 1.1rem; font-weight: 800; }
-.ev-block.span2 { grid-column: 1 / -1; }
+.ev-block-val { font-size: .92rem; font-weight: 700; color: #0f172a; }
+.ev-block-val.blue  { color: #0284c7; }
+.ev-block-val.green { color: #16a34a; }
+.ev-block-val.gold  { color: #ca8a04; }
 
-/* ── collaborators ── */
-.collabs { display: flex; flex-wrap: wrap; gap: .6rem; }
+/* Collaborators */
+.collabs { display: flex; flex-wrap: wrap; gap: .5rem; }
 .collab {
-  display: flex; align-items: center; gap: .5rem;
-  padding: .65rem 1rem; border: 1px solid rgba(255,255,255,0.08);
-  border-radius: .65rem; background: rgba(255,255,255,0.02);
-  font-size: .85rem; font-weight: 500; color: #888;
+  display: inline-flex; align-items: center; gap: .5rem;
+  background: #ffffff; border: 1px solid #e2e8f0;
+  border-radius: .65rem; padding: .55rem .95rem;
+  font-size: .8rem; font-weight: 600; color: #334155;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
 }
-.cdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.cdot { width: 8px; height: 8px; border-radius: 50%; }
 
-/* ── cert bar ── */
+/* Cert Note */
 .cert-bar {
-  display: flex; align-items: flex-start; gap: .85rem;
-  padding: 1.25rem;
-  border: 1px solid rgba(41,151,255,0.15);
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
   border-radius: .85rem;
-  background: rgba(41,151,255,0.04);
+  padding: 1.1rem 1.25rem;
+  display: flex; gap: .85rem; align-items: flex-start;
 }
-.cert-icon { font-size: 1.15rem; flex-shrink: 0; margin-top: .1rem; }
-.cert-text { font-size: .82rem; color: #666; line-height: 1.6; }
-.cert-text a { color: #2997ff; text-decoration: none; }
-.cert-text strong { color: #2997ff; }
+.cert-icon { font-size: 1.35rem; line-height: 1; }
+.cert-text { font-size: .82rem; color: #166534; line-height: 1.5; }
+.cert-text a { color: #15803d; font-weight: 700; text-decoration: underline; }
 
-/* ── footer ── */
-.pg-footer {
-  text-align: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: .6rem; color: #333;
-  letter-spacing: .06em; text-transform: uppercase;
-  padding-top: 1rem;
-}
-.pg-footer a { color: #2997ff; text-decoration: none; }
-
-/* ── toast ── */
-.toast-wrap {
-  position: fixed; bottom: 1.5rem; right: 1.5rem;
-  z-index: 999; pointer-events: none;
-  display: flex; flex-direction: column; gap: .4rem;
-}
-.toast {
-  background: #111; border: 1px solid #34d399; color: #34d399;
-  border-radius: .6rem; padding: .55rem .9rem;
-  font-family: 'JetBrains Mono', monospace; font-size: .72rem;
-  animation: slideUp .18s ease;
-}
-@keyframes slideUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
-
-/* ── password gate ── */
+/* Password Gate Overlay */
 .gate-overlay {
   position: fixed; inset: 0; z-index: 200;
-  background: #060608;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
   display: flex; align-items: center; justify-content: center;
   padding: 1.5rem;
 }
 .gate-overlay.hidden { display: none; }
 .gate-box {
-  width: 100%; max-width: 400px;
-  background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 1.25rem;
+  width: 100%; max-width: 420px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.5rem;
   padding: 2.5rem 2rem;
   text-align: center;
-  position: relative;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
 }
 .gate-logo {
-  width: 48px; height: 48px; border-radius: 12px;
-  background: #2997ff;
+  width: 52px; height: 52px; border-radius: 14px;
+  background: #0f172a;
   display: flex; align-items: center; justify-content: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: .9rem; font-weight: 700; color: #000;
+  font-size: 1.4rem; color: #fff;
   margin: 0 auto 1.25rem;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
 }
 .gate-eyebrow {
-  font-size: .6rem; font-weight: 700;
-  letter-spacing: .14em; text-transform: uppercase;
-  color: #2997ff; margin-bottom: .6rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .65rem; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: #0284c7; margin-bottom: .4rem;
 }
 .gate-title {
   font-size: 1.4rem; font-weight: 800;
-  letter-spacing: -.02em; color: #f5f5f7;
-  margin-bottom: .5rem;
+  letter-spacing: -.02em; color: #0f172a;
+  margin-bottom: .4rem;
 }
 .gate-sub {
-  font-size: .85rem; color: #555; margin-bottom: 1.75rem; line-height: 1.5;
+  font-size: .85rem; color: #64748b; margin-bottom: 1.75rem; line-height: 1.5;
 }
-.gate-sub strong { color: #888; }
 .gate-input-wrap {
-  display: flex; flex-direction: column; gap: .65rem;
+  display: flex; flex-direction: column; gap: .75rem;
 }
 .gate-input {
   width: 100%;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: .75rem;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: .85rem;
   padding: .85rem 1rem;
-  font-size: .95rem; font-weight: 500;
-  color: #f0f0f2; outline: none;
+  font-size: .95rem; font-weight: 600;
+  color: #0f172a; outline: none;
   font-family: 'Inter', sans-serif;
-  transition: border-color .15s, box-shadow .15s;
   text-align: center;
+  transition: all .15s;
 }
-.gate-input::placeholder { color: #333; }
 .gate-input:focus {
-  border-color: rgba(41,151,255,0.5);
-  box-shadow: 0 0 0 3px rgba(41,151,255,0.12);
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+  background: #ffffff;
 }
 .gate-input.shake {
   animation: shake .35s ease;
-  border-color: rgba(239,68,68,0.5);
+  border-color: #ef4444;
 }
 @keyframes shake {
   0%,100%{transform:translateX(0)}
@@ -497,39 +344,51 @@ body::before {
 }
 .gate-btn {
   width: 100%;
-  background: #2997ff; color: #000;
-  border: none; border-radius: .75rem;
-  padding: .85rem 1rem;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: .8rem; font-weight: 700;
-  letter-spacing: .08em; text-transform: uppercase;
-  cursor: pointer; transition: opacity .15s, transform .1s;
+  background: #0f172a; color: #ffffff;
+  border: none; border-radius: .85rem;
+  padding: .9rem 1rem;
+  font-family: 'Inter', sans-serif;
+  font-size: .875rem; font-weight: 700;
+  cursor: pointer; transition: all .15s;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
 }
-.gate-btn:hover { opacity: .88; }
-.gate-btn:active { transform: scale(.97); }
+.gate-btn:hover { background: #1e293b; transform: translateY(-1px); }
+.gate-btn:active { transform: scale(.98); }
 .gate-err {
-  margin-top: 1rem; font-size: .8rem;
+  margin-top: .9rem; font-size: .8rem; font-weight: 600;
   color: #ef4444; font-family: 'JetBrains Mono', monospace;
 }
 
-/* ── print ── */
+/* Toast */
+.toast-wrap {
+  position: fixed; bottom: 1.5rem; right: 1.5rem;
+  z-index: 999; pointer-events: none;
+  display: flex; flex-direction: column; gap: .4rem;
+}
+.toast {
+  background: #0f172a; border: 1px solid #334155; color: #38bdf8;
+  border-radius: .6rem; padding: .6rem 1rem;
+  font-family: 'JetBrains Mono', monospace; font-size: .75rem; font-weight: 700;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.pg-footer {
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .65rem; color: #94a3b8;
+  letter-spacing: .06em; text-transform: uppercase;
+  padding-top: 2rem;
+}
+
 @media print {
-  body::before,.orb,.site-header,.no-print,.toast-wrap { display:none!important; }
-  body { background:#fff; color:#111; }
-  .card,.team-block,.teammate,.event-hero,.ev-block { background:#fff!important; border-color:#e5e7eb!important; }
-  .id-card { background:#f5f3ff!important; border-color:#c4b5fd!important; }
-  .url-card { background:#f0fdf4!important; border-color:#6ee7b7!important; }
-  .id-card-value { color:#4338ca!important; }
-  .url-card .id-card-value { color:#059669!important; }
-  .hero-banner { background:#f3f4f6!important; }
-  .ev-val.accent,.ev-block-val.blue { color:#1d4ed8!important; }
+  body::before,.accent-bar,.site-header,.no-print,.toast-wrap { display:none!important; }
+  body { background:#fff; color:#000; }
+  .dark-identity-card { background:#000!important; color:#fff!important; }
 }
 </style>
 </head>
 <body>
 
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
 <div class="accent-bar"></div>
 
 <!-- HEADER -->
@@ -541,7 +400,6 @@ body::before {
   <div class="header-right">
     <button onclick="window.print()" class="hbtn no-print">🖨 Print</button>
     <a href="/" class="hbtn">← Home</a>
-    <button onclick="handleLogout()" class="hbtn" style="color:#ef4444;border-color:rgba(239,68,68,0.3)">🚪 Logout</button>
   </div>
 </header>
 
@@ -554,136 +412,128 @@ body::before {
     <div class="gate-logo">🔒</div>
     <div class="gate-eyebrow mono">Password Protected</div>
     <h2 class="gate-title">Member View</h2>
-    <p class="gate-sub">Enter the member's <strong>full name</strong> as the password to unlock and view this profile.</p>
+    <p class="gate-sub">Enter the member's <strong>full name</strong> as password to unlock and view this profile.</p>
     <div class="gate-input-wrap">
       <input id="gate-input" class="gate-input" type="text"
         placeholder="Enter member's name as password…" autocomplete="off" spellcheck="false"
-        onkeydown="if(event.key==='Enter')tryUnlock()"/>
+        onkeydown="if(event.key==='Enter')tryUnlock()" autofocus />
       <button class="gate-btn" onclick="tryUnlock()">Unlock Profile →</button>
     </div>
-    <p id="gate-err" class="gate-err hidden">✗ Incorrect password / name. Please try again.</p>
+    <p id="gate-err" class="gate-err hidden"></p>
   </div>
 </div>
 
-  <!-- Profile -->
-  <div id="profile" class="hidden">
+<!-- Profile Container -->
+<div id="profile" class="hidden">
 
-    <!-- HERO -->
-    <div class="hero-wrap section">
-      <div class="hero-banner">
-        <div class="banner-text">
-          <div class="banner-sub">
-            <span class="live-dot"></span>
-            CalmStacks // 24H Sprint
-          </div>
-          <div class="banner-title">Hackathon Participant Profile</div>
-        </div>
+  <!-- ════ DARK IDENTITY CARD (NAME & USN) ════ -->
+  <div class="dark-identity-card">
+    <div class="dark-av" id="av"></div>
+    <div class="dark-identity-text">
+      <div class="dark-identity-eyebrow">
+        <span class="live-dot"></span>
+        Verified Participant
       </div>
-      <div class="hero-body">
-        <div class="av" id="av"></div>
-        <div class="hero-text">
-          <h1 class="hero-name" id="member-name"></h1>
-          <p class="hero-usn" id="member-usn"></p>
-        </div>
+      <h1 class="dark-identity-name" id="member-name"></h1>
+      <div class="dark-identity-usn" id="member-usn"></div>
+    </div>
+  </div>
+
+  <!-- PARTICIPANT ID & PROFILE URL -->
+  <div class="section">
+    <div class="section-label">Participant Identity</div>
+    <div class="id-card" id="uid-card" onclick="copyId()" title="Click to copy">
+      <div class="id-card-label">Unique Participant ID</div>
+      <div class="id-card-value" id="uid"></div>
+    </div>
+    <div class="url-card" onclick="copyUrl()" title="Click to copy">
+      <div class="id-card-label">Individual Profile URL</div>
+      <div class="id-card-value" id="member-url"></div>
+    </div>
+  </div>
+
+  <!-- EVENT HERO -->
+  <div class="section">
+    <div class="section-label">Event</div>
+    <div class="event-hero">
+      <div class="ev-eyebrow">CalmStacks presents // CSE Student Development Series</div>
+      <div class="ev-big-title">CalmStacks 24 Hour Hackathon 2026</div>
+      <div class="ev-chips">
+        <span class="ec ec-blue">📅 25–26 Sep 2026</span>
+        <span class="ec ec-blue">⏰ 11:30 AM IST</span>
+        <span class="ec">📍 MCE, Hassan</span>
+        <span class="ec ec-gold">🏆 ₹50,000 Pool</span>
+        <span class="ec">⚡ 24 Hours Offline</span>
       </div>
     </div>
 
-    <!-- PARTICIPANT ID -->
-    <div class="section">
-      <div class="section-label">Participant Identity</div>
-      <div class="id-card" id="uid-card" onclick="copyId()" title="Click to copy">
-        <div class="id-card-label">Unique Participant ID</div>
-        <div class="id-card-value" id="uid"></div>
+    <!-- Event info blocks -->
+    <div class="ev-grid">
+      <div class="ev-block">
+        <div class="ev-block-label">Organizer</div>
+        <div class="ev-block-val blue">CalmStacks</div>
       </div>
-      <div class="url-card" onclick="copyUrl()" title="Click to copy">
-        <div class="id-card-label">Individual Profile URL</div>
-        <div class="id-card-value" id="member-url"></div>
+      <div class="ev-block">
+        <div class="ev-block-label">Series</div>
+        <div class="ev-block-val">CSE Student Dev Series</div>
       </div>
-    </div>
-
-
-    <!-- EVENT HERO -->
-    <div class="section">
-      <div class="section-label">Event</div>
-      <div class="event-hero">
-        <div class="ev-eyebrow">CalmStacks presents // CSE Student Development Series</div>
-        <div class="ev-big-title">CalmStacks 24 Hour Hackathon 2026</div>
-        <div class="ev-chips">
-          <span class="ec ec-blue">📅 25–26 Sep 2026</span>
-          <span class="ec ec-blue">⏰ 11:30 AM IST</span>
-          <span class="ec">📍 MCE, Hassan</span>
-          <span class="ec ec-gold">🏆 ₹50,000 Pool</span>
-          <span class="ec">⚡ 24 Hours Offline</span>
-        </div>
+      <div class="ev-block">
+        <div class="ev-block-label">Date</div>
+        <div class="ev-block-val blue">25–26 Sep 2026</div>
       </div>
-
-      <!-- Event info blocks -->
-      <div class="ev-grid">
-        <div class="ev-block">
-          <div class="ev-block-label">Organizer</div>
-          <div class="ev-block-val blue">CalmStacks</div>
-        </div>
-        <div class="ev-block">
-          <div class="ev-block-label">Series</div>
-          <div class="ev-block-val">CSE Student Dev Series</div>
-        </div>
-        <div class="ev-block">
-          <div class="ev-block-label">Date</div>
-          <div class="ev-block-val blue">25–26 Sep 2026</div>
-        </div>
-        <div class="ev-block">
-          <div class="ev-block-label">Kickoff Time</div>
-          <div class="ev-block-val">11:30 AM IST</div>
-        </div>
-        <div class="ev-block">
-          <div class="ev-block-label">Duration</div>
-          <div class="ev-block-val">24 Consecutive Hours</div>
-        </div>
-        <div class="ev-block">
-          <div class="ev-block-label">Format</div>
-          <div class="ev-block-val">Offline Sprint</div>
-        </div>
-        <div class="ev-block span2">
-          <div class="ev-block-label">Venue</div>
-          <div class="ev-block-val green">Malnad College of Engineering, Hassan</div>
-        </div>
-        <div class="ev-block">
-          <div class="ev-block-label">Prize Pool</div>
-          <div class="ev-block-val gold">₹50,000</div>
-        </div>
-        <div class="ev-block">
-          <div class="ev-block-label">Internships</div>
-          <div class="ev-block-val">4 Paid + More</div>
-        </div>
+      <div class="ev-block">
+        <div class="ev-block-label">Kickoff Time</div>
+        <div class="ev-block-val">11:30 AM IST</div>
+      </div>
+      <div class="ev-block">
+        <div class="ev-block-label">Duration</div>
+        <div class="ev-block-val">24 Consecutive Hours</div>
+      </div>
+      <div class="ev-block">
+        <div class="ev-block-label">Format</div>
+        <div class="ev-block-val">Offline Sprint</div>
+      </div>
+      <div class="ev-block span2">
+        <div class="ev-block-label">Venue</div>
+        <div class="ev-block-val green">Malnad College of Engineering, Hassan</div>
+      </div>
+      <div class="ev-block">
+        <div class="ev-block-label">Prize Pool</div>
+        <div class="ev-block-val gold">₹50,000</div>
+      </div>
+      <div class="ev-block">
+        <div class="ev-block-label">Internships</div>
+        <div class="ev-block-val">4 Paid + More</div>
       </div>
     </div>
+  </div>
 
-    <!-- COLLABORATORS -->
-    <div class="section">
-      <div class="section-label">Collaborators</div>
-      <div class="collabs">
-        <div class="collab"><span class="cdot" style="background:#2997ff"></span>Agamya Cyber Tech</div>
-        <div class="collab"><span class="cdot" style="background:#34d399"></span>MCE Dept. of CSE</div>
-        <div class="collab"><span class="cdot" style="background:#a78bfa"></span>Malnad College of Engineering</div>
-      </div>
+  <!-- COLLABORATORS -->
+  <div class="section">
+    <div class="section-label">Collaborators</div>
+    <div class="collabs">
+      <div class="collab"><span class="cdot" style="background:#0284c7"></span>Agamya Cyber Tech</div>
+      <div class="collab"><span class="cdot" style="background:#16a34a"></span>MCE Dept. of CSE</div>
+      <div class="collab"><span class="cdot" style="background:#8b5cf6"></span>Malnad College of Engineering</div>
     </div>
+  </div>
 
-    <!-- CERT NOTE -->
-    <div class="cert-bar no-print" style="margin-bottom:2rem;">
-      <span class="cert-icon">🏅</span>
-      <p class="cert-text">
-        This is your <strong>official digital participant record</strong> for CalmStacks 24H Hackathon 2026.
-        Share this URL when requested by organizers. More at
-        <a href="https://www.calmstacks.co.in/hackathon" target="_blank">calmstacks.co.in/hackathon</a>
-      </p>
-    </div>
+  <!-- CERT NOTE -->
+  <div class="cert-bar no-print" style="margin-bottom:2rem;">
+    <span class="cert-icon">🏅</span>
+    <p class="cert-text">
+      This is your <strong>official digital participant record</strong> for CalmStacks 24H Hackathon 2026.
+      Share this URL when requested by organizers. More at
+      <a href="https://www.calmstacks.co.in/hackathon" target="_blank">calmstacks.co.in/hackathon</a>
+    </p>
+  </div>
 
-    <div class="pg-footer">
-      CalmStacks Hackathon 2026 &nbsp;·&nbsp;
-      <a href="https://www.calmstacks.co.in/hackathon">calmstacks.co.in/hackathon</a>
-    </div>
+  <div class="pg-footer">
+    CalmStacks Hackathon 2026 &nbsp;·&nbsp;
+    <a href="https://www.calmstacks.co.in/hackathon" target="_blank" style="color:#0284c7;text-decoration:none;">calmstacks.co.in/hackathon</a>
+  </div>
 
-  </div><!-- /profile -->
+</div><!-- /profile -->
 </main>
 
 <div class="toast-wrap" id="toasts"></div>
@@ -692,15 +542,11 @@ body::before {
 /* helpers */
 const clean = s => {
   const v = String(s||'').trim();
-  // strip Excel / spreadsheet errors
   if (!v || v.startsWith('#') || v === 'undefined' || v === 'null') return '';
   return v;
 };
 const esc = s => clean(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const initials = n => n.trim().split(/\s+/).map(w=>w[0]||'').join('').toUpperCase().slice(0,2)||'?';
-
-const ROLE_AV  = { 'Team Lead':'av-lead','Member 2':'av-m2','Member 3':'av-m3','Member 4':'av-m4' };
-const ROLE_TAG = { 'Team Lead':'tag-blue','Member 2':'tag-pink','Member 3':'tag-amber','Member 4':'tag-green' };
 
 const toast = msg => {
   const t = document.createElement('div');
@@ -714,58 +560,30 @@ const cp = (text, lbl) =>
 const copyId  = () => cp(document.getElementById('uid').textContent, 'ID copied');
 const copyUrl = () => cp(document.getElementById('member-url').textContent, 'URL copied');
 
-/* detail row — only renders if value is non-empty */
-const dRow = (key, val, cls='') => {
-  const v = clean(val);
-  if (!v) return '';
-  return `<div class="detail-row">
-    <span class="dr-key">${key}</span>
-    <span class="dr-val${cls?' '+cls:''}">${esc(v)}</span>
-  </div>`;
-};
-
 const memberId = location.pathname.split('/').filter(Boolean).pop().trim();
 const sessionKey = 'unlocked_' + memberId;
 
-const renderProfile = ({ member: m, team, teammates }) => {
+const renderProfile = ({ member: m }) => {
   document.title = `${m.name} — CalmStacks 24H 2026`;
 
   /* avatar */
   const avEl = document.getElementById('av');
   avEl.textContent = initials(m.name);
-  avEl.classList.add(ROLE_AV[m.role] || 'av-lead');
 
-  /* hero */
+  /* Dark identity fields */
   document.getElementById('member-name').textContent = m.name;
   const usnClean = clean(m.usn);
-  document.getElementById('member-usn').textContent = usnClean ? 'USN: ' + usnClean : '';
+  const usnEl = document.getElementById('member-usn');
+  if (usnClean) {
+    usnEl.textContent = 'USN: ' + usnClean;
+    usnEl.classList.remove('hidden');
+  } else {
+    usnEl.classList.add('hidden');
+  }
 
   /* IDs */
   document.getElementById('uid').textContent        = m.id;
   document.getElementById('member-url').textContent = m.profile_url || window.location.href;
-
-  /* Teammates */
-  if (team) {
-    const tName = document.getElementById('team-name');
-    if (tName) tName.textContent = team.team_name || '—';
-    const tSize = document.getElementById('team-size');
-    if (tSize) tSize.textContent = team.team_size || '';
-  }
-  if (teammates && teammates.length) {
-    const tmList = document.getElementById('teammates');
-    if (tmList) {
-      tmList.innerHTML = teammates.map(tm => {
-        const isSelf = tm.id === m.id;
-        return `<div class="teammate${isSelf ? ' self' : ''}">
-          <div class="tm-av ${ROLE_AV[tm.role] || 'av-lead'}">${initials(tm.name)}</div>
-          <div>
-            <div class="tm-name">${esc(tm.name)}${isSelf ? ' (You)' : ''}</div>
-            <div class="tm-usn">${esc(tm.role)}${tm.usn ? ' · ' + esc(tm.usn) : ''}</div>
-          </div>
-        </div>`;
-      }).join('');
-    }
-  }
 
   document.getElementById('gate').classList.add('hidden');
   document.getElementById('profile').classList.remove('hidden');
@@ -798,7 +616,7 @@ const tryUnlock = async () => {
       err.classList.add('hidden');
       renderProfile(data);
     } else {
-      err.textContent = '✗ Incorrect name. Please enter your full name as registered.';
+      err.textContent = '✗ Incorrect name. Please enter your full registered name.';
       err.classList.remove('hidden');
       input.classList.remove('shake');
       void input.offsetWidth;
@@ -814,7 +632,7 @@ const tryUnlock = async () => {
   }
 };
 
-// Check if already unlocked in this browser session
+// Check if already unlocked in this session
 const cached = sessionStorage.getItem(sessionKey);
 if (cached) {
   try {
