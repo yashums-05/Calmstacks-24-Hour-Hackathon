@@ -14,7 +14,11 @@
 const fs   = require('node:fs');
 const path = require('node:path');
 
-const BASE_DIR   = fs.existsSync(path.join(__dirname, 'data')) ? __dirname : process.cwd();
+const BASE_DIR   = fs.existsSync(path.join(__dirname, 'data'))
+  ? __dirname
+  : (fs.existsSync(path.join(__dirname, '..', 'data'))
+    ? path.join(__dirname, '..')
+    : process.cwd());
 const DATA_DIR   = path.join(BASE_DIR, 'data');
 const SOURCE_CSV = path.join(BASE_DIR, 'Untitled spreadsheet - Sheet1 (1).csv');
 const TEAMS_CSV  = path.join(DATA_DIR, 'participants.csv');

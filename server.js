@@ -23,6 +23,8 @@ function getHtmlContent(fileName) {
     path.join(PUBLIC_DIR, fileName),
     path.join(__dirname, 'public', fileName),
     path.join(process.cwd(), 'public', fileName),
+    path.join(__dirname, '..', 'public', fileName),
+    path.join(process.cwd(), '..', 'public', fileName),
     path.join(__dirname, fileName),
     path.join(process.cwd(), fileName)
   ];
