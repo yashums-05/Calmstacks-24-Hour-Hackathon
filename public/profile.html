@@ -131,7 +131,7 @@ const copyId = () => {
   });
 };
 
-const id = location.pathname.replace('/p/','').replace(/\//g,'').trim();
+const id = location.pathname.split('/').filter(Boolean).pop().trim();
 
 fetch(`/api/participants/${id}`)
   .then(async r => { if(!r.ok) throw new Error(); return r.json(); })

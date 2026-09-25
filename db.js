@@ -14,13 +14,16 @@
 const fs   = require('node:fs');
 const path = require('node:path');
 
-const DATA_DIR         = path.join(__dirname, 'data');
-const SOURCE_CSV       = path.join(__dirname, 'Untitled spreadsheet - Sheet1 (1).csv');
-const TEAMS_CSV        = path.join(DATA_DIR, 'participants.csv');
-const MEMBERS_CSV      = path.join(DATA_DIR, 'members.csv');
-const EVENT_JSON       = path.join(DATA_DIR, 'event.json');
+const BASE_DIR   = fs.existsSync(path.join(__dirname, 'data')) ? __dirname : process.cwd();
+const DATA_DIR   = path.join(BASE_DIR, 'data');
+const SOURCE_CSV = path.join(BASE_DIR, 'Untitled spreadsheet - Sheet1 (1).csv');
+const TEAMS_CSV  = path.join(DATA_DIR, 'participants.csv');
+const MEMBERS_CSV= path.join(DATA_DIR, 'members.csv');
+const EVENT_JSON = path.join(DATA_DIR, 'event.json');
 
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+try {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+} catch (e) {}
 
 // ── CSV helpers ────────────────────────────────────────────────────
 function parseLine(line) {

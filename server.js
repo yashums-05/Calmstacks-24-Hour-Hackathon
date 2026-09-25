@@ -1,5 +1,6 @@
 const express = require('express');
 const path    = require('path');
+const fs      = require('fs');
 const crypto  = require('crypto');
 const db      = require('./db');
 
@@ -9,6 +10,10 @@ const PORT = process.env.PORT || 3000;
 const AUTH_USER   = 'yashu';
 const AUTH_PASS   = 'Yashu@2005';
 const AUTH_SECRET = process.env.AUTH_SECRET || 'hackathon_secret_yashu_2005_auth_token';
+
+const PUBLIC_DIR = fs.existsSync(path.join(__dirname, 'public'))
+  ? path.join(__dirname, 'public')
+  : path.join(process.cwd(), 'public');
 
 // ── Helpers ────────────────────────────────────────────────────────
 function generateToken(user) {
@@ -57,12 +62,12 @@ const host = req => `${req.protocol}://${req.get('host')}`;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(PUBLIC_DIR));
 
 // ── Auth Endpoints ─────────────────────────────────────────────────
 app.get('/login', (req, res) => {
   if (isAuthenticated(req)) return res.redirect('/admin');
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  res.sendFile(path.join(PUBLIC_DIR, 'login.html'));
 });
 
 app.post('/api/login', (req, res) => {
@@ -91,7 +96,7 @@ app.get('/api/auth/me', (req, res) => {
 
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
-// ── Public APIs (Members & Teams View) ──────────────────────────────
+// ── Public APIs ────────────────────────────────────────────────────
 app.get('/api/event', (req, res) => res.json(db.getEvent() || {}));
 
 app.get('/api/participants', (req, res) => {
@@ -104,10 +109,10 @@ app.get('/api/participants/:id', (req, res) => {
   if (!team) return res.status(404).json({ error: 'Not found' });
   const members = db.getMembersForTeam(team.id).map(m => ({
     ...m,
-    profile_url: `${host(req)}/m/${m.id}`,
+    profile_url: `${host(req)}/participants/${m.id}`,
   }));
   res.json({
-    participant: { ...team, profile_url: `${host(req)}/p/${team.id}` },
+    participant: { ...team, profile_url: `${host(req)}/participants/${team.id}` },
     members,
     event: db.getEvent() || {},
   });
@@ -125,11 +130,11 @@ app.get('/api/members/:id', (req, res) => {
     ...result,
     member: {
       ...result.member,
-      profile_url: `${host(req)}/m/${result.member.id}`,
+      profile_url: `${host(req)}/participants/${result.member.id}`,
     },
     teammates: result.teammates.map(m => ({
       ...m,
-      profile_url: `${host(req)}/m/${m.id}`,
+      profile_url: `${host(req)}/participants/${m.id}`,
     })),
   });
 });
@@ -147,10 +152,10 @@ app.post('/api/participants', requireAdmin, (req, res) => {
   const { team, members } = db.addTeam(req.body);
   res.status(201).json({
     ...team,
-    profile_url: `${host(req)}/p/${team.id}`,
+    profile_url: `${host(req)}/participants/${team.id}`,
     members: members.map(m => ({
       ...m,
-      profile_url: `${host(req)}/m/${m.id}`,
+      profile_url: `${host(req)}/participants/${m.id}`,
     })),
   });
 });
@@ -158,7 +163,7 @@ app.post('/api/participants', requireAdmin, (req, res) => {
 app.put('/api/participants/:id', requireAdmin, (req, res) => {
   const t = db.updateTeam(req.params.id, req.body);
   if (!t) return res.status(404).json({ error: 'Not found' });
-  res.json({ ...t, profile_url: `${host(req)}/p/${t.id}` });
+  res.json({ ...t, profile_url: `${host(req)}/participants/${t.id}` });
 });
 
 app.delete('/api/participants/:id', requireAdmin, (req, res) => {
@@ -170,7 +175,7 @@ app.delete('/api/participants/:id', requireAdmin, (req, res) => {
 app.put('/api/members/:id', requireAdmin, (req, res) => {
   const m = db.updateMember(req.params.id, req.body);
   if (!m) return res.status(404).json({ error: 'Not found' });
-  res.json({ ...m, profile_url: `${host(req)}/m/${m.id}` });
+  res.json({ ...m, profile_url: `${host(req)}/participants/${m.id}` });
 });
 
 app.post('/api/members', requireAdmin, (req, res) => {
@@ -179,7 +184,7 @@ app.post('/api/members', requireAdmin, (req, res) => {
   const team = db.getTeam(team_id);
   if (!team) return res.status(404).json({ error: 'Team not found' });
   const m = db.addMember({ team_id, name, usn: usn || '', role: role || 'Member', registered_at: new Date().toLocaleString('en-IN') });
-  res.status(201).json({ ...m, profile_url: `${host(req)}/m/${m.id}` });
+  res.status(201).json({ ...m, profile_url: `${host(req)}/participants/${m.id}` });
 });
 
 app.get('/api/export', requireAdmin, (req, res) => {
@@ -187,26 +192,39 @@ app.get('/api/export', requireAdmin, (req, res) => {
   res.json(db.exportAll());
 });
 
-// ── Pages ──────────────────────────────────────────────────────────
-// Public direct member & team profiles
-app.get('/m/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'member.html')));
-app.get('/p/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'profile.html')));
+// ── Pages & Direct Public Views ────────────────────────────────────
+// /participants route: serves main dashboard
+app.get('/participants', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
+
+// /participants/:id route: serves member.html if member id (-M) or member exists, else profile.html
+app.get('/participants/:id', (req, res) => {
+  const id = req.params.id || '';
+  if (id.includes('-M') || db.getMember(id)) {
+    return res.sendFile(path.join(PUBLIC_DIR, 'member.html'));
+  }
+  return res.sendFile(path.join(PUBLIC_DIR, 'profile.html'));
+});
+
+// Short link routes
+app.get('/m/:id', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'member.html')));
+app.get('/p/:id', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'profile.html')));
 
 // Admin protected page
-app.get('/admin', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/admin', requireAdmin, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin.html')));
 
-// Default to home page / dashboard
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.use((req, res) => res.redirect('/'));
+// Root home page
+app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
+
+// Fallback
+app.use((req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`\n✦ Hackathon Participant ID System`);
-    console.log(`  Dashboard  : http://localhost:${PORT}`);
-    console.log(`  Admin      : http://localhost:${PORT}/admin`);
-    console.log(`  Team URL   : http://localhost:${PORT}/p/:teamId`);
-    console.log(`  Member URL : http://localhost:${PORT}/m/:memberId`);
-    console.log(`  CSV files  : data/participants.csv + data/members.csv\n`);
+    console.log(`  Dashboard    : http://localhost:${PORT}`);
+    console.log(`  Participants : http://localhost:${PORT}/participants`);
+    console.log(`  Admin        : http://localhost:${PORT}/admin`);
+    console.log(`  Participant  : http://localhost:${PORT}/participants/:id`);
   });
 }
 

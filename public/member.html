@@ -724,7 +724,7 @@ const dRow = (key, val, cls='') => {
   </div>`;
 };
 
-const memberId = location.pathname.replace('/m/','').replace(/\//g,'').trim();
+const memberId = location.pathname.split('/').filter(Boolean).pop().trim();
 const sessionKey = 'unlocked_' + memberId;
 
 let _memberName = '';
