@@ -315,7 +315,7 @@ app.get('/', (req, res) => sendHtml(res, 'index.html'));
 // Fallback: send index.html
 app.use((req, res) => sendHtml(res, 'index.html'));
 
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`\n✦ Hackathon Participant ID System (Admin Protected Directory)`);
     console.log(`  Admin Panel  : http://localhost:${PORT}/admin`);
