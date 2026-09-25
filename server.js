@@ -273,17 +273,12 @@ app.get('/p/:id', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'profile.html
 // Admin Panel (Protected with yashu / Yashu@2005)
 app.get('/admin', requireAdmin, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin.html')));
 
-// Root & All-participants list page (Admin Protected: only admin sees all data)
-app.get('/participants', requireAdmin, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
-app.get('/', (req, res) => {
-  if (isAuthenticated(req)) {
-    return res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
-  }
-  return res.redirect('/login');
-});
+// Public Portal Home Page & Participant Lookup
+app.get('/participants', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
+app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 
 // Fallback
-app.use((req, res) => res.redirect('/login'));
+app.use((req, res) => res.redirect('/'));
 
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   app.listen(PORT, () => {
