@@ -18,6 +18,32 @@ const PUBLIC_DIR = fs.existsSync(path.join(__dirname, 'public'))
 // ── Helpers ────────────────────────────────────────────────────────
 const normalize = s => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
 
+function getHtmlContent(fileName) {
+  const candidates = [
+    path.join(PUBLIC_DIR, fileName),
+    path.join(__dirname, 'public', fileName),
+    path.join(process.cwd(), 'public', fileName),
+    path.join(__dirname, fileName),
+    path.join(process.cwd(), fileName)
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) {
+      return fs.readFileSync(c, 'utf8');
+    }
+  }
+  return null;
+}
+
+function sendHtml(res, fileName) {
+  const html = getHtmlContent(fileName);
+  if (html) {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    return res.send(html);
+  }
+  return res.status(404).send(`File ${fileName} not found`);
+}
+
 function generateToken(user) {
   const ts = Date.now().toString();
   const data = `${user}:${ts}`;
@@ -73,7 +99,7 @@ app.get('/login', (req, res) => {
     return res.redirect(redirect);
   }
   if (isAuthenticated(req)) return res.redirect('/admin');
-  res.sendFile(path.join(PUBLIC_DIR, 'login.html'));
+  return sendHtml(res, 'login.html');
 });
 
 app.post('/api/login', (req, res) => {
@@ -266,23 +292,23 @@ app.get('/api/export', requireAdmin, (req, res) => {
 app.get('/participants/:id', (req, res) => {
   const id = req.params.id || '';
   if (id.includes('-M') || db.getMember(id)) {
-    return res.sendFile(path.join(PUBLIC_DIR, 'member.html'));
+    return sendHtml(res, 'member.html');
   }
-  return res.sendFile(path.join(PUBLIC_DIR, 'profile.html'));
+  return sendHtml(res, 'profile.html');
 });
 
-app.get('/m/:id', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'member.html')));
-app.get('/p/:id', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'profile.html')));
+app.get('/m/:id', (req, res) => sendHtml(res, 'member.html'));
+app.get('/p/:id', (req, res) => sendHtml(res, 'profile.html'));
 
 // Admin Panel (Protected with yashu / Yashu@2005)
-app.get('/admin', requireAdmin, (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin.html')));
+app.get('/admin', requireAdmin, (req, res) => sendHtml(res, 'admin.html'));
 
-// Public Portal Home Page & Participant Lookup
-app.get('/participants', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
-app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
+// Public Portal Home Page
+app.get('/participants', (req, res) => sendHtml(res, 'index.html'));
+app.get('/', (req, res) => sendHtml(res, 'index.html'));
 
-// Fallback
-app.use((req, res) => res.redirect('/'));
+// Fallback: send index.html
+app.use((req, res) => sendHtml(res, 'index.html'));
 
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   app.listen(PORT, () => {
