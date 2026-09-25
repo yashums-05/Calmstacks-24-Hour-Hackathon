@@ -1,5 +1,5 @@
 {
-  "name": "event-participant-id-system",
+  "name": "calmstacks-24-hour-hackathon",
   "version": "1.0.0",
   "description": "Event Participant Unique ID System with shareable profile URLs",
   "main": "server.js",
