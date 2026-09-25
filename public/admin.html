@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Admin — Hackathon ID System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; background: #0a0d14; color: #e2e8f0; }
+  ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+  /* inputs */
+  .inp { width:100%; background:#111827; border:1px solid #1f2937; border-radius:.6rem;
+    padding:.55rem .9rem; font-size:.875rem; color:#e2e8f0; outline:none; transition:.15s; }
+  .inp::placeholder { color:#374151; }
+  .inp:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.15); }
+  select.inp option { background:#111827; }
+  textarea.inp { resize:vertical; }
+
+  .lbl { display:block; font-size:.72rem; font-weight:700; color:#4b5563;
+    text-transform:uppercase; letter-spacing:.07em; margin-bottom:.3rem; }
+
+  /* buttons */
+  .btn { border:none; border-radius:.65rem; padding:.55rem 1.2rem; font-weight:600;
+    font-size:.875rem; cursor:pointer; transition:all .15s; white-space:nowrap; }
+  .btn-primary { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; }
+  .btn-primary:hover { opacity:.9; transform:translateY(-1px); }
+  .btn-primary:active { transform:scale(.97); }
+  .btn-outline { background:transparent; border:1px solid #1f2937; color:#6b7280; }
+  .btn-outline:hover { border-color:#6366f1; color:#e2e8f0; }
+  .btn-danger { background:transparent; border:1px solid rgba(239,68,68,.3); color:#ef4444; }
+  .btn-danger:hover { background:rgba(239,68,68,.08); }
+  .btn-success { background:linear-gradient(135deg,#059669,#10b981); color:#fff; }
+  .btn-sm { padding:.3rem .75rem; font-size:.8rem; border-radius:.5rem; }
+
+  /* cards */
+  .card { background:#111827; border:1px solid #1f2937; border-radius:1rem; }
+  .section-card { background:#0d1117; border:1px solid #161b22; border-radius:1rem; padding:1.5rem; }
+
+  /* sidebar nav */
+  .nav-link { display:flex; align-items:center; gap:.75rem; padding:.6rem .9rem; border-radius:.65rem;
+    font-size:.875rem; font-weight:600; cursor:pointer; transition:.15s; color:#4b5563; }
+  .nav-link:hover { background:#111827; color:#e2e8f0; }
+  .nav-link.active { background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.2); }
+  .nav-link .icon { font-size:1rem; width:1.25rem; text-align:center; }
+
+  /* table */
+  table { width:100%; border-collapse:collapse; }
+  th { background:#0d1117; color:#4b5563; font-size:.72rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.06em; padding:.65rem 1rem; text-align:left; border-bottom:1px solid #1f2937; }
+  td { padding:.65rem 1rem; font-size:.85rem; border-bottom:1px solid #0d1117;
+    color:#d1d5db; vertical-align:middle; }
+  tr:hover td { background:#111827; }
+  tr:last-child td { border-bottom:none; }
+
+  /* pill */
+  .pill { display:inline-flex; align-items:center; padding:2px 9px; border-radius:999px;
+    font-size:.68rem; font-weight:700; white-space:nowrap; }
+
+  /* id mono */
+  .mono { font-family:'Courier New',monospace; font-size:.72rem; color:#818cf8; cursor:pointer; }
+  .mono:hover { color:#a5b4fc; }
+
+  /* modal */
+  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.7); backdrop-filter:blur(8px);
+    z-index:50; display:flex; align-items:center; justify-content:center; padding:1rem;
+    animation:fi .18s ease; }
+  .modal-box { background:#111827; border:1px solid #1f2937; border-radius:1.25rem;
+    width:100%; max-width:640px; max-height:92vh; overflow-y:auto; animation:su .2s ease; }
+  @keyframes fi { from{opacity:0} to{opacity:1} }
+  @keyframes su { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  /* toast */
+  .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:#111827; border:1px solid #1f2937;
+    border-radius:.75rem; padding:.75rem 1.25rem; font-size:.875rem; z-index:100; animation:fi .2s ease;
+    box-shadow:0 8px 32px rgba(0,0,0,.5); }
+  .toast.ok  { border-color:#10b981; color:#10b981; }
+  .toast.err { border-color:#ef4444; color:#ef4444; }
+  .toast.info{ border-color:#6366f1; color:#818cf8; }
+
+  /* success box */
+  .success-box { background:rgba(16,185,129,.05); border:1px solid rgba(16,185,129,.25);
+    border-radius:.75rem; padding:1.25rem; }
+  .url-chip { font-family:'Courier New',monospace; font-size:.75rem; background:rgba(16,185,129,.1);
+    color:#34d399; border:1px solid rgba(16,185,129,.25); border-radius:.5rem; padding:.4rem .7rem;
+    display:block; word-break:break-all; cursor:pointer; }
+  .id-chip { font-family:'Courier New',monospace; font-size:.75rem; background:rgba(99,102,241,.1);
+    color:#818cf8; border:1px solid rgba(99,102,241,.25); border-radius:.5rem; padding:.4rem .7rem;
+    display:block; word-break:break-all; cursor:pointer; }
+
+  /* section divider */
+  .divider { display:flex; align-items:center; gap:.75rem; color:#374151;
+    font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; margin:1.25rem 0; }
+  .divider::before,.divider::after { content:''; flex:1; height:1px; background:#1f2937; }
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<!-- TOP BAR -->
+<header style="background:#111827; border-bottom:1px solid #1f2937"
+  class="sticky top-0 z-20 px-6 py-3 flex items-center gap-4">
+  <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6)"
+    class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0">A</div>
+  <div>
+    <span class="font-bold text-sm text-slate-100">Admin Panel</span>
+    <span class="text-slate-600 text-xs ml-2">Hackathon Participant ID System</span>
+  </div>
+  <div class="ml-auto flex items-center gap-3">
+    <span id="hdr-cnt" class="pill" style="background:rgba(99,102,241,.12);color:#818cf8">0 teams</span>
+    <a href="/" class="btn btn-outline btn-sm">👁 Public View</a>
+    <a href="/api/export" class="btn btn-outline btn-sm">⬇ Export JSON</a>
+    <button onclick="handleLogout()" class="btn btn-danger btn-sm">🚪 Logout</button>
+  </div>
+</header>
+
+<div class="flex flex-1">
+
+  <!-- SIDEBAR -->
+  <aside style="background:#0d1117; border-right:1px solid #161b22; width:220px; min-height:calc(100vh - 52px)"
+    class="shrink-0 p-4 flex flex-col gap-1 sticky top-[52px] self-start">
+    <button class="nav-link active" onclick="showSection('add',this)" id="nav-add">
+      <span class="icon">➕</span> Add Team
+    </button>
+    <button class="nav-link" onclick="showSection('manage',this)" id="nav-manage">
+      <span class="icon">👥</span> Manage Teams
+    </button>
+    <button class="nav-link" onclick="showSection('member',this)" id="nav-member">
+      <span class="icon">➕</span> Add Member
+    </button>
+    <button class="nav-link" onclick="showSection('event',this)" id="nav-event">
+      <span class="icon">⚙</span> Event Setup
+    </button>
+    <div class="mt-auto pt-4 border-t border-slate-800">
+      <p class="text-slate-600 text-xs px-1">Database: CSV file</p>
+      <p class="text-slate-700 text-xs px-1 mt-1 font-mono">data/participants.csv</p>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 p-6 overflow-auto">
+
+    <!-- ══════════════════════════════════════════════════
+         SECTION: ADD TEAM
+    ══════════════════════════════════════════════════ -->
+    <section id="sec-add">
+      <div class="mb-5">
+        <h2 class="text-lg font-bold text-slate-100">Register New Team</h2>
+        <p class="text-slate-500 text-sm mt-1">Fill in the details below. A UUID will be generated and a shareable profile URL will be created.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- LEFT: Form -->
+        <div class="section-card space-y-5">
+
+          <!-- Event info bar -->
+          <div id="event-bar" class="hidden flex items-center gap-3 p-3 rounded-xl"
+            style="background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.15)">
+            <span class="text-indigo-400 text-sm">📅</span>
+            <span id="event-bar-name" class="text-indigo-300 text-sm font-semibold"></span>
+          </div>
+
+          <div class="divider">Team Info</div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="col-span-2">
+              <label class="lbl">Team Name *</label>
+              <input id="f-team" class="inp" placeholder="e.g. CodeCrafters" autocomplete="off"/>
+            </div>
+            <div>
+              <label class="lbl">Team Size</label>
+              <select id="f-size" class="inp">
+                <option value="">Select…</option>
+                <option>Solo (1 Member)</option>
+                <option>Team of 2 Members (₹600)</option>
+                <option>Team of 3 Members (₹900)</option>
+                <option>Team of 4 Members (₹1,200)</option>
+                <option>Team of 5 Members (₹1,500)</option>
+              </select>
+            </div>
+            <div>
+              <label class="lbl">Year & Sem</label>
+              <select id="f-year" class="inp">
+                <option value="">Select…</option>
+                <option>1st Year (1st/2nd Sem)</option>
+                <option>2nd Year (3rd/4th Sem)</option>
+                <option>3rd Year (5th/6th Sem)</option>
+                <option>4th Year (7th/8th Sem)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="divider">Team Lead</div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="col-span-2">
+              <label class="lbl">Lead Full Name *</label>
+              <input id="f-lead" class="inp" placeholder="e.g. Yashwanth M S" autocomplete="off"/>
+            </div>
+            <div>
+              <label class="lbl">Lead USN</label>
+              <input id="f-usn" class="inp" placeholder="e.g. 4MC24CS001" autocomplete="off"/>
+            </div>
+            <div>
+              <label class="lbl">Lead Email *</label>
+              <input id="f-email" class="inp" type="email" placeholder="lead@college.edu"/>
+            </div>
+            <div class="col-span-2">
+              <label class="lbl">Lead Phone</label>
+              <input id="f-phone" class="inp" type="tel" placeholder="+91 99999 00000"/>
+            </div>
+          </div>
+
+          <div class="divider">Team Members</div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="lbl">Member 2 Name</label><input id="f-m2" class="inp" placeholder="Full name"/></div>
+            <div><label class="lbl">Member 2 USN</label><input id="f-u2" class="inp" placeholder="USN"/></div>
+            <div><label class="lbl">Member 3 Name</label><input id="f-m3" class="inp" placeholder="Full name"/></div>
+            <div><label class="lbl">Member 3 USN</label><input id="f-u3" class="inp" placeholder="USN"/></div>
+            <div><label class="lbl">Member 4 Name</label><input id="f-m4" class="inp" placeholder="Full name"/></div>
+            <div><label class="lbl">Member 4 USN</label><input id="f-u4" class="inp" placeholder="USN"/></div>
+          </div>
+
+          <div class="divider">Payment</div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="lbl">Status</label>
+              <select id="f-pay" class="inp">
+                <option value="">—</option>
+                <option value="PAID">PAID</option>
+                <option value="PENDING">PENDING</option>
+              </select>
+            </div>
+            <div>
+              <label class="lbl">Amount</label>
+              <input id="f-amount" class="inp" placeholder="₹1,200"/>
+            </div>
+            <div>
+              <label class="lbl">UTR / Transaction ID</label>
+              <input id="f-utr" class="inp" placeholder="UTR number"/>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 pt-2">
+            <button class="btn btn-primary" onclick="addTeam()">✦ Generate ID & Register</button>
+            <button class="btn btn-outline" onclick="clearForm()">Clear</button>
+            <span id="f-err" class="hidden text-red-400 text-sm font-medium"></span>
+          </div>
+        </div>
+
+        <!-- RIGHT: Result / Preview -->
+        <div>
+          <!-- Success result -->
+          <div id="add-result" class="hidden success-box mb-4">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="text-green-400 text-xl">✓</span>
+              <div>
+                <p class="font-bold text-green-400">Team registered successfully!</p>
+                <p id="res-team" class="text-slate-400 text-sm"></p>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div>
+                <p class="lbl mb-1">Unique Team ID</p>
+                <div class="flex gap-2">
+                  <code id="res-id" class="id-chip flex-1" onclick="cp(this.textContent,'ID')"></code>
+                  <button class="btn btn-outline btn-sm" onclick="cp(document.getElementById('res-id').textContent,'ID')">Copy</button>
+                </div>
+              </div>
+              <div>
+                <p class="lbl mb-2">Individual Member Profile URLs</p>
+                <div id="res-members" class="space-y-2"></div>
+              </div>
+              <div class="flex gap-2 pt-1">
+                <button class="btn btn-outline btn-sm" onclick="addAnother()">➕ Add Another</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Instructions card -->
+          <div id="add-hint" class="section-card">
+            <h3 class="font-bold text-slate-300 mb-3">How it works</h3>
+            <div class="space-y-3 text-sm text-slate-500">
+              <div class="flex gap-3">
+                <span class="text-indigo-400 shrink-0">①</span>
+                <p>Fill in the team details on the left. <span class="text-slate-400">Team name, lead name, and email are required.</span></p>
+              </div>
+              <div class="flex gap-3">
+                <span class="text-indigo-400 shrink-0">②</span>
+                <p>Click <span class="text-slate-400 font-semibold">Generate ID & Register</span> — a UUID v4 is assigned and the team is saved to the CSV.</p>
+              </div>
+              <div class="flex gap-3">
+                <span class="text-indigo-400 shrink-0">③</span>
+                <p>Share the profile URL with the participant. It shows their team + all members + event details when opened.</p>
+              </div>
+              <div class="flex gap-3">
+                <span class="text-indigo-400 shrink-0">④</span>
+                <p>All data is stored in <code class="text-indigo-400">data/participants.csv</code> — open it in Excel anytime.</p>
+              </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-slate-800">
+              <p class="text-xs text-slate-600">💡 Set up your event name and details in <button onclick="showSection('event',document.getElementById('nav-event'))" class="text-indigo-400 underline">Event Setup</button> — it appears on every profile URL.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         SECTION: MANAGE TEAMS
+    ══════════════════════════════════════════════════ -->
+    <section id="sec-manage" class="hidden">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h2 class="text-lg font-bold text-slate-100">Manage Teams</h2>
+          <p class="text-slate-500 text-sm mt-1">View, edit, or delete registered teams.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <input id="search" class="inp" style="width:260px" placeholder="🔍  Search team, lead, USN, ID…" oninput="loadTable()"/>
+          <button class="btn btn-outline btn-sm" onclick="clearAll()">🗑 Clear All</button>
+        </div>
+      </div>
+
+      <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Team</th>
+                <th>Lead / USN</th>
+                <th>Members</th>
+                <th>Year</th>
+                <th>Payment</th>
+                <th>Unique ID</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tbl-body"></tbody>
+          </table>
+        </div>
+        <div id="tbl-empty" class="hidden py-16 text-center text-slate-600">
+          <div class="text-4xl mb-2 opacity-20">👥</div>
+          <p class="text-sm">No teams found.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         SECTION: EVENT SETUP
+    ══════════════════════════════════════════════════ -->
+    <section id="sec-event" class="hidden">
+      <div class="mb-5">
+        <h2 class="text-lg font-bold text-slate-100">Event Setup</h2>
+        <p class="text-slate-500 text-sm mt-1">This information appears on every participant's profile page when the URL is opened.</p>
+      </div>
+
+      <div class="section-card max-w-2xl">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="col-span-2">
+            <label class="lbl">Event Name *</label>
+            <input id="ev-name" class="inp" placeholder="e.g. National Hackathon 2026"/>
+          </div>
+          <div>
+            <label class="lbl">Event Type</label>
+            <select id="ev-type" class="inp">
+              <option value="">—</option>
+              <option>Hackathon</option><option>Conference</option><option>Workshop</option>
+              <option>Seminar</option><option>Competition</option><option>Expo</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl">Edition / Season</label>
+            <input id="ev-ed" class="inp" placeholder="e.g. Vol. 1, Spring 2026"/>
+          </div>
+          <div>
+            <label class="lbl">Start Date</label>
+            <input id="ev-sd" class="inp" type="date"/>
+          </div>
+          <div>
+            <label class="lbl">End Date</label>
+            <input id="ev-ed2" class="inp" type="date"/>
+          </div>
+          <div class="col-span-2">
+            <label class="lbl">Venue / Location</label>
+            <input id="ev-venue" class="inp" placeholder="e.g. IIT Bombay, Mumbai, India"/>
+          </div>
+          <div class="col-span-2">
+            <label class="lbl">Organizer / Host</label>
+            <input id="ev-org" class="inp" placeholder="e.g. IEEE Student Chapter"/>
+          </div>
+          <div class="col-span-2">
+            <label class="lbl">Description</label>
+            <textarea id="ev-desc" class="inp" rows="3" placeholder="Short description of the event…"></textarea>
+          </div>
+        </div>
+        <div class="mt-5 flex items-center gap-3">
+          <button class="btn btn-primary" onclick="saveEvent()">💾 Save Event Details</button>
+          <span id="ev-ok" class="hidden text-green-400 text-sm font-medium">✓ Saved!</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         SECTION: ADD MEMBER
+    ══════════════════════════════════════════════════ -->
+    <section id="sec-member" class="hidden">
+      <div class="mb-5">
+        <h2 class="text-lg font-bold text-slate-100">Add Member</h2>
+        <p class="text-slate-500 text-sm mt-1">Add an individual member to an existing registered team. A unique profile URL will be generated.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Form -->
+        <div class="section-card space-y-4">
+
+          <div class="divider">Select Team</div>
+          <div>
+            <label class="lbl">Team *</label>
+            <select id="am-team" class="inp">
+              <option value="">Loading teams…</option>
+            </select>
+          </div>
+
+          <div class="divider">Member Info</div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="col-span-2">
+              <label class="lbl">Full Name *</label>
+              <input id="am-name" class="inp" placeholder="e.g. Ravi Kumar" autocomplete="off"/>
+            </div>
+            <div>
+              <label class="lbl">USN</label>
+              <input id="am-usn" class="inp" placeholder="e.g. 4MC24CS002" autocomplete="off"/>
+            </div>
+            <div>
+              <label class="lbl">Role</label>
+              <select id="am-role" class="inp">
+                <option value="Member 2">Member 2</option>
+                <option value="Member 3">Member 3</option>
+                <option value="Member 4">Member 4</option>
+                <option value="Member 5">Member 5</option>
+                <option value="Member">Member</option>
+              </select>
+            </div>
+            <div>
+              <label class="lbl">Email</label>
+              <input id="am-email" class="inp" type="email" placeholder="member@college.edu"/>
+            </div>
+            <div>
+              <label class="lbl">Phone</label>
+              <input id="am-phone" class="inp" type="tel" placeholder="+91 99999 00000"/>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 pt-2">
+            <button class="btn btn-primary" onclick="addMember()">✦ Add Member & Generate URL</button>
+            <button class="btn btn-outline" onclick="clearMemberForm()">Clear</button>
+            <span id="am-err" class="hidden text-red-400 text-sm font-medium"></span>
+          </div>
+        </div>
+
+        <!-- Result -->
+        <div>
+          <div id="am-result" class="hidden success-box mb-4">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="text-green-400 text-xl">✓</span>
+              <div>
+                <p class="font-bold text-green-400">Member added successfully!</p>
+                <p id="am-res-name" class="text-slate-400 text-sm"></p>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div>
+                <p class="lbl mb-1">Unique Member ID</p>
+                <div class="flex gap-2">
+                  <code id="am-res-id" class="id-chip flex-1" onclick="cp(this.textContent,'ID')"></code>
+                  <button class="btn btn-outline btn-sm" onclick="cp(document.getElementById('am-res-id').textContent,'ID')">Copy</button>
+                </div>
+              </div>
+              <div>
+                <p class="lbl mb-1">Individual Profile URL</p>
+                <div class="flex gap-2">
+                  <code id="am-res-url" class="url-chip flex-1" onclick="window.open(this.textContent,'_blank')"></code>
+                  <button class="btn btn-outline btn-sm" onclick="cp(document.getElementById('am-res-url').textContent,'URL')">Copy</button>
+                </div>
+              </div>
+              <div class="flex gap-2 pt-1">
+                <button class="btn btn-success btn-sm" onclick="window.open(document.getElementById('am-res-url').textContent,'_blank')">🔗 Open Profile</button>
+                <button class="btn btn-outline btn-sm" onclick="clearMemberForm()">➕ Add Another</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="am-hint" class="section-card">
+            <h3 class="font-bold text-slate-300 mb-3">How it works</h3>
+            <div class="space-y-3 text-sm text-slate-500">
+              <div class="flex gap-3"><span class="text-indigo-400 shrink-0">①</span><p>Select an existing registered team from the dropdown.</p></div>
+              <div class="flex gap-3"><span class="text-indigo-400 shrink-0">②</span><p>Enter the member's name (required) and USN.</p></div>
+              <div class="flex gap-3"><span class="text-indigo-400 shrink-0">③</span><p>Click <span class="text-slate-400 font-semibold">Add Member</span> — a unique ID and individual profile URL is generated.</p></div>
+              <div class="flex gap-3"><span class="text-indigo-400 shrink-0">④</span><p>The member can access their profile using their own name as the password.</p></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ══ EDIT MODAL ══════════════════════════════════════════════ -->
+<div id="modal" class="modal-bg hidden" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="px-6 pt-5 pb-3 flex items-center justify-between border-b border-slate-800">
+      <h3 class="font-bold text-slate-100 text-lg">Edit Team</h3>
+      <button onclick="closeModal()" class="text-slate-500 hover:text-slate-100 text-xl">✕</button>
+    </div>
+    <div class="px-6 py-5 space-y-4">
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="col-span-2"><label class="lbl">Team Name</label><input id="e-team" class="inp"/></div>
+        <div><label class="lbl">Team Size</label>
+          <select id="e-size" class="inp">
+            <option value="">Select…</option>
+            <option>Solo (1 Member)</option>
+            <option>Team of 2 Members (₹600)</option>
+            <option>Team of 3 Members (₹900)</option>
+            <option>Team of 4 Members (₹1,200)</option>
+            <option>Team of 5 Members (₹1,500)</option>
+          </select></div>
+        <div><label class="lbl">Year & Sem</label>
+          <select id="e-year" class="inp">
+            <option value="">Select…</option>
+            <option>1st Year (1st/2nd Sem)</option>
+            <option>2nd Year (3rd/4th Sem)</option>
+            <option>3rd Year (5th/6th Sem)</option>
+            <option>4th Year (7th/8th Sem)</option>
+          </select></div>
+      </div>
+
+      <div class="divider">Lead</div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">Lead Name</label><input id="e-lead" class="inp"/></div>
+        <div><label class="lbl">Lead USN</label><input id="e-usn" class="inp"/></div>
+        <div><label class="lbl">Email</label><input id="e-email" class="inp" type="email"/></div>
+        <div><label class="lbl">Phone</label><input id="e-phone" class="inp"/></div>
+      </div>
+
+      <div class="divider">Members</div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">Member 2</label><input id="e-m2" class="inp" placeholder="Name"/></div>
+        <div><label class="lbl">USN 2</label><input id="e-u2" class="inp" placeholder="USN"/></div>
+        <div><label class="lbl">Member 3</label><input id="e-m3" class="inp" placeholder="Name"/></div>
+        <div><label class="lbl">USN 3</label><input id="e-u3" class="inp" placeholder="USN"/></div>
+        <div><label class="lbl">Member 4</label><input id="e-m4" class="inp" placeholder="Name"/></div>
+        <div><label class="lbl">USN 4</label><input id="e-u4" class="inp" placeholder="USN"/></div>
+      </div>
+
+      <div class="divider">Payment</div>
+      <div class="grid grid-cols-3 gap-3">
+        <div><label class="lbl">Status</label>
+          <select id="e-pay" class="inp">
+            <option value="">—</option><option value="PAID">PAID</option><option value="PENDING">PENDING</option>
+          </select></div>
+        <div><label class="lbl">Amount</label><input id="e-amount" class="inp"/></div>
+        <div><label class="lbl">UTR</label><input id="e-utr" class="inp"/></div>
+      </div>
+    </div>
+    <div class="px-6 pb-5 flex gap-3 border-t border-slate-800 pt-4">
+      <button class="btn btn-primary flex-1" onclick="saveEdit()">💾 Save Changes</button>
+      <button onclick="closeModal()" class="btn btn-outline">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const initials = n => n.trim().split(/\s+/).map(w=>w[0]||'').join('').toUpperCase().slice(0,2)||'?';
+
+let editingId = null;
+
+// ── Toast ─────────────────────────────────────────────────────────
+const toast = (msg, type='ok') => {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+};
+const cp = (text, label='Text') =>
+  navigator.clipboard.writeText(text).then(() => toast(`✓ ${label} copied!`));
+
+// ── Sidebar nav ───────────────────────────────────────────────────
+const showSection = (name, btn) => {
+  ['add','manage','member','event'].forEach(s => $('sec-'+s).classList.add('hidden'));
+  document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+  $('sec-'+name).classList.remove('hidden');
+  btn.classList.add('active');
+  if (name === 'manage') loadTable();
+  if (name === 'member') loadTeamDropdown();
+};
+
+// ── Event ─────────────────────────────────────────────────────────
+const loadEvent = async () => {
+  const ev = await fetch('/api/event').then(r => r.json());
+  if (ev.name) {
+    $('ev-name').value   = ev.name         || '';
+    $('ev-type').value   = ev.type         || '';
+    $('ev-ed').value     = ev.edition      || '';
+    $('ev-sd').value     = ev.start_date   || '';
+    $('ev-ed2').value    = ev.end_date     || '';
+    $('ev-venue').value  = ev.venue        || '';
+    $('ev-org').value    = ev.organizer    || '';
+    $('ev-desc').value   = ev.description  || '';
+    $('event-bar-name').textContent = ev.name;
+    $('event-bar').classList.remove('hidden');
+  }
+};
+const saveEvent = async () => {
+  const name = $('ev-name').value.trim();
+  if (!name) { toast('Event name required', 'err'); return; }
+  await fetch('/api/event', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name, type: $('ev-type').value, edition: $('ev-ed').value.trim(),
+      start_date: $('ev-sd').value, end_date: $('ev-ed2').value,
+      venue: $('ev-venue').value.trim(), organizer: $('ev-org').value.trim(),
+      description: $('ev-desc').value.trim()
+    })
+  });
+  $('event-bar-name').textContent = name;
+  $('event-bar').classList.remove('hidden');
+  $('ev-ok').classList.remove('hidden');
+  setTimeout(() => $('ev-ok').classList.add('hidden'), 2500);
+  toast('Event saved!');
+};
+
+// ── Add Team ──────────────────────────────────────────────────────
+const addTeam = async () => {
+  $('f-err').classList.add('hidden');
+  const team_name = $('f-team').value.trim();
+  const lead_name = $('f-lead').value.trim();
+  const email     = $('f-email').value.trim();
+  if (!team_name || !lead_name || !email) {
+    $('f-err').textContent = '⚠ Team name, lead name and email are required.';
+    $('f-err').classList.remove('hidden'); return;
+  }
+
+  const body = {
+    team_name, team_size: $('f-size').value,
+    lead_name, usn: $('f-usn').value.trim(),
+    email, phone: $('f-phone').value.trim(),
+    year: $('f-year').value,
+    member2: $('f-m2').value.trim(), usn2: $('f-u2').value.trim(),
+    member3: $('f-m3').value.trim(), usn3: $('f-u3').value.trim(),
+    member4: $('f-m4').value.trim(), usn4: $('f-u4').value.trim(),
+    payment_status: $('f-pay').value,
+    amount: $('f-amount').value.trim(), utr: $('f-utr').value.trim(),
+  };
+
+  const res  = await fetch('/api/participants', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+  });
+  const data = await res.json();
+
+  if (!res.ok) {
+    $('f-err').textContent = '⚠ ' + data.error;
+    $('f-err').classList.remove('hidden'); return;
+  }
+
+  $('res-id').textContent   = data.id;
+  $('res-team').textContent = data.team_name + ' · ' + data.lead_name;
+
+  // Render individual member profile URLs
+  const ROLE_COLOR = { 'Team Lead':'#818cf8','Member 2':'#f472b6','Member 3':'#fbbf24','Member 4':'#34d399' };
+  $('res-members').innerHTML = data.members.map(m => {
+    const color = ROLE_COLOR[m.role] || '#818cf8';
+    const url   = m.profile_url;
+    return `<div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.18);border-radius:.6rem;padding:.6rem .8rem;">
+        <div class="flex items-center justify-between gap-2 mb-1">
+          <span style="font-size:.7rem;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:.06em;">${esc(m.role)} — ${esc(m.name)}</span>
+          <div class="flex gap-1">
+            <button class="btn btn-outline btn-sm" onclick="window.open('${url}','_blank')" style="padding:.2rem .5rem;font-size:.7rem;">🔗 Open</button>
+            <button class="btn btn-outline btn-sm" onclick="cp('${url}','URL')" style="padding:.2rem .5rem;font-size:.7rem;">Copy</button>
+          </div>
+        </div>
+        <code style="font-family:'Courier New',monospace;font-size:.72rem;color:#34d399;word-break:break-all;cursor:pointer;" onclick="cp('${url}','URL')">${url}</code>
+      </div>`;
+  }).join('');
+
+  $('add-result').classList.remove('hidden');
+  $('add-hint').classList.add('hidden');
+  clearForm(false);
+
+  // update count
+  const cnt = await fetch('/api/participants').then(r => r.json());
+  $('hdr-cnt').textContent = `${cnt.total} teams`;
+  toast('✦ Team registered!');
+};
+
+const clearForm = (clearResult = true) => {
+  ['f-team','f-lead','f-usn','f-email','f-phone','f-amount','f-utr',
+   'f-m2','f-u2','f-m3','f-u3','f-m4','f-u4'].forEach(id => $(id).value = '');
+  $('f-size').value = ''; $('f-year').value = ''; $('f-pay').value = '';
+  $('f-err').classList.add('hidden');
+  if (clearResult) { $('add-result').classList.add('hidden'); $('add-hint').classList.remove('hidden'); }
+};
+
+const addAnother = () => {
+  $('add-result').classList.add('hidden');
+  $('add-hint').classList.remove('hidden');
+};
+
+// ── Table ─────────────────────────────────────────────────────────
+const paidBadge   = '<span class="pill" style="background:rgba(16,185,129,.15);color:#10b981">PAID</span>';
+const pendBadge   = '<span class="pill" style="background:rgba(239,68,68,.12);color:#ef4444">PENDING</span>';
+const naBadge     = '<span class="pill" style="background:rgba(51,65,85,.5);color:#64748b">—</span>';
+
+const loadTable = async () => {
+  const q   = $('search')?.value || '';
+  const url = q ? `/api/participants?search=${encodeURIComponent(q)}` : '/api/participants';
+  const r   = await fetch(url).then(r => r.json());
+  $('hdr-cnt').textContent = `${r.total} team${r.total !== 1 ? 's' : ''}`;
+
+  if (!r.participants.length) {
+    $('tbl-body').innerHTML = '';
+    $('tbl-empty').classList.remove('hidden'); return;
+  }
+  $('tbl-empty').classList.add('hidden');
+
+  // Fetch all members so we can link each person individually
+  const membersData = await fetch('/api/members').then(r => r.json());
+  const membersByTeam = {};
+  for (const m of membersData.members) {
+    if (!membersByTeam[m.team_id]) membersByTeam[m.team_id] = [];
+    membersByTeam[m.team_id].push(m);
+  }
+
+  const ROLE_DOT = { 'Team Lead':'#818cf8','Member 2':'#f472b6','Member 3':'#fbbf24','Member 4':'#34d399' };
+
+  $('tbl-body').innerHTML = r.participants.map(p => {
+    const payBadge = p.payment_status === 'PAID' ? paidBadge
+                   : p.payment_status ? pendBadge : naBadge;
+    const teamMembers = membersByTeam[p.id] || [];
+
+    const memberLinks = teamMembers.map(m => {
+      const dot = ROLE_DOT[m.role] || '#818cf8';
+      const url = `${location.origin}/m/${m.id}`;
+      return `<a href="${url}" target="_blank"
+        class="flex items-center gap-1.5 text-xs no-underline group"
+        style="text-decoration:none;padding:.18rem 0">
+        <span style="width:6px;height:6px;border-radius:50%;background:${dot};flex-shrink:0;display:inline-block;"></span>
+        <span class="text-slate-300 group-hover:text-indigo-300 transition-colors" style="white-space:nowrap">${esc(m.name)}</span>
+        <span class="text-slate-600 font-mono" style="font-size:.65rem">${esc(m.usn||'')}</span>
+        <span class="text-indigo-500 group-hover:text-indigo-300 transition-colors ml-auto">↗</span>
+      </a>`;
+    }).join('');
+
+    return `<tr>
+      <td>
+        <p class="font-semibold text-slate-100 text-sm">${esc(p.team_name)}</p>
+        <p class="text-slate-500 text-xs mt-0.5">${esc(p.team_size || '—')}</p>
+      </td>
+      <td>
+        <p class="text-slate-200 text-sm">${esc(p.lead_name)}</p>
+        <p class="text-slate-500 text-xs font-mono mt-0.5">${esc(p.usn || '—')}</p>
+      </td>
+      <td style="min-width:200px">
+        <div class="space-y-0.5">${memberLinks || '<span class="text-slate-600 text-xs">Solo</span>'}</div>
+      </td>
+      <td class="text-slate-400 text-xs">${esc(p.year || '—')}</td>
+      <td>
+        ${payBadge}
+        ${p.amount ? `<p class="text-slate-500 text-xs mt-1">${esc(p.amount)}</p>` : ''}
+      </td>
+      <td>
+        <span class="mono" onclick="cp('${p.id}','ID')" title="Click to copy">${p.id.slice(0,8)}…</span>
+      </td>
+      <td>
+        <div class="flex gap-1.5">
+          <button class="btn btn-outline btn-sm" onclick="openEdit('${p.id}')">✏ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="delTeam('${p.id}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+};
+
+const clearAll = async () => {
+  if (!confirm('⚠ Delete ALL teams from the CSV? This cannot be undone.')) return;
+  const r = await fetch('/api/participants').then(r => r.json());
+  for (const p of r.participants) await fetch(`/api/participants/${p.id}`, { method: 'DELETE' });
+  loadTable(); toast('All teams removed', 'err');
+};
+
+const delTeam = async (id) => {
+  if (!confirm('Remove this team from the CSV?')) return;
+  await fetch(`/api/participants/${id}`, { method: 'DELETE' });
+  loadTable(); toast('Team removed', 'err');
+};
+
+// ── Edit modal ────────────────────────────────────────────────────
+const openEdit = async (id) => {
+  editingId = id;
+  const r = await fetch(`/api/participants/${id}`).then(r => r.json());
+  const p = r.participant;
+  $('e-team').value   = p.team_name      || '';
+  $('e-size').value   = p.team_size      || '';
+  $('e-year').value   = p.year           || '';
+  $('e-lead').value   = p.lead_name      || '';
+  $('e-usn').value    = p.usn            || '';
+  $('e-email').value  = p.email          || '';
+  $('e-phone').value  = p.phone          || '';
+  $('e-m2').value     = p.member2        || '';
+  $('e-u2').value     = p.usn2           || '';
+  $('e-m3').value     = p.member3        || '';
+  $('e-u3').value     = p.usn3           || '';
+  $('e-m4').value     = p.member4        || '';
+  $('e-u4').value     = p.usn4           || '';
+  $('e-pay').value    = p.payment_status || '';
+  $('e-amount').value = p.amount         || '';
+  $('e-utr').value    = p.utr            || '';
+  $('modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+};
+
+const saveEdit = async () => {
+  const body = {
+    team_name:      $('e-team').value.trim(),
+    team_size:      $('e-size').value,
+    year:           $('e-year').value,
+    lead_name:      $('e-lead').value.trim(),
+    usn:            $('e-usn').value.trim(),
+    email:          $('e-email').value.trim(),
+    phone:          $('e-phone').value.trim(),
+    member2:        $('e-m2').value.trim(),
+    usn2:           $('e-u2').value.trim(),
+    member3:        $('e-m3').value.trim(),
+    usn3:           $('e-u3').value.trim(),
+    member4:        $('e-m4').value.trim(),
+    usn4:           $('e-u4').value.trim(),
+    payment_status: $('e-pay').value,
+    amount:         $('e-amount').value.trim(),
+    utr:            $('e-utr').value.trim(),
+  };
+  const res = await fetch(`/api/participants/${editingId}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+  });
+  if (!res.ok) { toast('Failed to save', 'err'); return; }
+  closeModal(); loadTable(); toast('✓ Changes saved!');
+};
+
+const closeModal = () => {
+  $('modal').classList.add('hidden');
+  document.body.style.overflow = '';
+  editingId = null;
+};
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── Count ─────────────────────────────────────────────────────────
+const loadCount = async () => {
+  const r = await fetch('/api/participants').then(r => r.json());
+  $('hdr-cnt').textContent = `${r.total} team${r.total !== 1 ? 's' : ''}`;
+};
+
+loadEvent();
+loadCount();
+
+// ── Add Member ────────────────────────────────────────────────────
+const loadTeamDropdown = async () => {
+  const r = await fetch('/api/participants').then(r => r.json());
+  $('am-team').innerHTML = r.participants.length
+    ? `<option value="">Select a team…</option>` +
+      r.participants.map(p =>
+        `<option value="${p.id}">${esc(p.team_name)} — ${esc(p.lead_name)}</option>`
+      ).join('')
+    : `<option value="">No teams registered yet</option>`;
+};
+
+const addMember = async () => {
+  $('am-err').classList.add('hidden');
+  const team_id = $('am-team').value;
+  const name    = $('am-name').value.trim();
+  if (!team_id) { $('am-err').textContent = '⚠ Please select a team.'; $('am-err').classList.remove('hidden'); return; }
+  if (!name)    { $('am-err').textContent = '⚠ Member name is required.'; $('am-err').classList.remove('hidden'); return; }
+
+  const res  = await fetch('/api/members', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      team_id, name,
+      usn:   $('am-usn').value.trim(),
+      role:  $('am-role').value,
+      email: $('am-email').value.trim(),
+      phone: $('am-phone').value.trim(),
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) { $('am-err').textContent = '⚠ ' + data.error; $('am-err').classList.remove('hidden'); return; }
+
+  $('am-res-id').textContent   = data.id;
+  $('am-res-url').textContent  = data.profile_url;
+  $('am-res-name').textContent = data.name + ' · ' + data.role;
+  $('am-result').classList.remove('hidden');
+  $('am-hint').classList.add('hidden');
+  toast('✦ Member added!');
+};
+
+const clearMemberForm = () => {
+  ['am-name','am-usn','am-email','am-phone'].forEach(id => $(id).value = '');
+  $('am-role').value = 'Member 2';
+  $('am-err').classList.add('hidden');
+  $('am-result').classList.add('hidden');
+  $('am-hint').classList.remove('hidden');
+};
+
+async function handleLogout() {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/login';
+}
+</script>
+</body>
+</html>

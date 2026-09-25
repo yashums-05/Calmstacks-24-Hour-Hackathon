@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Hackathon Participant Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body{font-family:'Inter',system-ui,sans-serif;background:#0f1117;color:#e2e8f0}
+  ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#334155;border-radius:4px}
+  .card{background:#1e2130;border:1px solid #2d3748;border-radius:1rem}
+  .inp{width:100%;background:#141824;border:1px solid #2d3748;border-radius:.6rem;
+    padding:.55rem .9rem;font-size:.875rem;color:#e2e8f0;outline:none;transition:.15s}
+  .inp::placeholder{color:#4a5568}
+  .inp:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.18)}
+  select.inp option{background:#1e2130}
+  .lbl{display:block;font-size:.75rem;font-weight:700;color:#64748b;
+    text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem}
+  .btn{border:none;border-radius:.7rem;padding:.55rem 1.2rem;font-weight:600;
+    font-size:.875rem;cursor:pointer;transition:.15s;white-space:nowrap}
+  .btn-p{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff}
+  .btn-p:hover{opacity:.9;transform:translateY(-1px)}
+  .btn-g{background:transparent;border:1px solid #2d3748;color:#94a3b8}
+  .btn-g:hover{border-color:#6366f1;color:#e2e8f0}
+  .tab{padding:.45rem 1rem;border-radius:.6rem;font-size:.85rem;font-weight:600;
+    cursor:pointer;transition:.15s;border:1px solid transparent}
+  .tab.on{background:#6366f1;color:#fff}
+  .tab:not(.on){color:#64748b;border-color:#2d3748}
+  .tab:not(.on):hover{color:#e2e8f0;border-color:#6366f1}
+  .pill{display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;
+    font-size:.7rem;font-weight:700;white-space:nowrap}
+  .pcard{background:#1e2130;border:1px solid #2d3748;border-radius:1rem;
+    padding:1rem;cursor:pointer;transition:.18s}
+  .pcard:hover{border-color:#6366f1;transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+  .id-chip{font-family:'Courier New',monospace;font-size:.65rem;letter-spacing:.04em;
+    background:rgba(99,102,241,.12);color:#818cf8;border:1px solid rgba(99,102,241,.3);
+    border-radius:.5rem;padding:.28rem .55rem;display:block;word-break:break-all;cursor:pointer}
+  .id-chip:hover{background:rgba(99,102,241,.22)}
+  .url-chip{font-family:'Courier New',monospace;font-size:.65rem;
+    background:rgba(16,185,129,.1);color:#34d399;border:1px solid rgba(16,185,129,.25);
+    border-radius:.5rem;padding:.28rem .55rem;display:block;word-break:break-all;cursor:pointer}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);
+    z-index:50;display:flex;align-items:center;justify-content:center;padding:1rem;animation:fi .18s ease}
+  .modal-box{background:#1e2130;border:1px solid #2d3748;border-radius:1.25rem;
+    width:100%;max-width:520px;max-height:92vh;overflow-y:auto;animation:su .2s ease}
+  @keyframes fi{from{opacity:0}to{opacity:1}}
+  @keyframes su{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#1e2130;border:1px solid #2d3748;
+    border-radius:.75rem;padding:.75rem 1.25rem;font-size:.875rem;z-index:100;animation:fi .2s ease}
+  .toast.ok{border-color:#34d399;color:#34d399}
+  .toast.err{border-color:#f87171;color:#f87171}
+  .av{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;
+    font-weight:bold;display:flex;align-items:center;justify-content:center}
+  .member-row{display:flex;align-items:center;gap:.5rem;padding:.4rem .6rem;
+    background:#141824;border-radius:.5rem;font-size:.8rem;color:#94a3b8}
+</style>
+</head>
+<body class="min-h-screen">
+
+<header style="background:#1e2130;border-bottom:1px solid #2d3748"
+  class="sticky top-0 z-20 px-5 py-3 flex items-center gap-3">
+  <div class="av w-9 h-9 rounded-xl text-sm shrink-0">HC</div>
+  <div>
+    <h1 class="font-bold text-base text-slate-100 leading-tight">Hackathon Dashboard</h1>
+    <p id="hdr-ev" class="text-slate-500 text-xs">Loading…</p>
+  </div>
+  <div class="ml-auto flex items-center gap-2">
+    <span id="hdr-cnt" class="pill" style="background:rgba(99,102,241,.15);color:#818cf8">0 teams</span>
+    <a href="/admin" class="btn btn-g text-xs px-3 py-1.5">⚙ Admin</a>
+    <a href="/api/export" class="btn btn-g text-xs px-3 py-1.5">⬇ Export JSON</a>
+    <button onclick="handleLogout()" class="btn text-xs px-3 py-1.5 text-red-400 border border-red-500/30 hover:bg-red-500/10">🚪 Logout</button>
+  </div>
+</header>
+
+<div class="max-w-6xl mx-auto px-4 pt-4 pb-2 flex gap-2">
+  <button class="tab on" onclick="showTab('list',this)">👥 Teams</button>
+  <button class="tab" onclick="showTab('add',this)">➕ Register Team</button>
+  <button class="tab" onclick="showTab('event',this)">⚙ Event Setup</button>
+</div>
+
+<div class="max-w-6xl mx-auto px-4 pb-12">
+
+<!-- ── TEAMS LIST ──────────────────────────────────────────────── -->
+<section id="tab-list">
+  <div class="flex gap-3 mb-4">
+    <input id="search" class="inp flex-1" placeholder="🔍  Search team, lead, email, USN, ID…" oninput="loadList()"/>
+    <button class="btn btn-g text-sm" onclick="clearAll()">🗑 Clear All</button>
+  </div>
+  <div id="p-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+  <div id="p-empty" class="hidden text-center py-20 text-slate-600">
+    <div class="text-5xl mb-3 opacity-20">👥</div><p class="text-sm">No teams found.</p>
+  </div>
+</section>
+
+<!-- ── ADD TEAM ────────────────────────────────────────────────── -->
+<section id="tab-add" class="hidden">
+  <div class="card p-6">
+    <h2 class="font-bold text-slate-100 mb-1">Register New Team</h2>
+    <p class="text-slate-500 text-sm mb-5">A unique ID + shareable profile URL will be generated.</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="lbl">Team Name *</label>
+        <input id="f-team" class="inp" placeholder="e.g. CodeCrafters"/>
+      </div>
+      <div>
+        <label class="lbl">Team Size</label>
+        <select id="f-size" class="inp">
+          <option value="">Select…</option>
+          <option>Solo (1 Member)</option>
+          <option>Team of 2 Members (₹600)</option>
+          <option>Team of 3 Members (₹900)</option>
+          <option>Team of 4 Members (₹1,200)</option>
+          <option>Team of 5 Members (₹1,500)</option>
+        </select>
+      </div>
+      <div><label class="lbl">Lead Name *</label><input id="f-lead" class="inp" placeholder="Full name"/></div>
+      <div><label class="lbl">Lead USN</label><input id="f-usn" class="inp" placeholder="e.g. 4MC24CS001"/></div>
+      <div><label class="lbl">Email *</label><input id="f-email" class="inp" type="email" placeholder="lead@example.com"/></div>
+      <div><label class="lbl">Phone</label><input id="f-phone" class="inp" type="tel" placeholder="+91 99999 00000"/></div>
+      <div><label class="lbl">Year & Sem</label><input id="f-year" class="inp" placeholder="e.g. 3rd Year (5th/6th Sem)"/></div>
+      <div><label class="lbl">Payment Status</label>
+        <select id="f-pay" class="inp"><option value="">—</option><option>PAID</option><option>PENDING</option></select>
+      </div>
+      <div><label class="lbl">Amount</label><input id="f-amount" class="inp" placeholder="e.g. ₹1,200"/></div>
+      <div><label class="lbl">UTR / Transaction ID</label><input id="f-utr" class="inp" placeholder="UTR number"/></div>
+
+      <div class="sm:col-span-2 border-t border-slate-700 pt-4">
+        <p class="lbl mb-3">Team Members (besides lead)</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div><label class="lbl">Member 2 Name</label><input id="f-m2" class="inp" placeholder="Name"/></div>
+          <div><label class="lbl">Member 2 USN</label><input id="f-u2" class="inp" placeholder="USN"/></div>
+          <div><label class="lbl">Member 3 Name</label><input id="f-m3" class="inp" placeholder="Name"/></div>
+          <div><label class="lbl">Member 3 USN</label><input id="f-u3" class="inp" placeholder="USN"/></div>
+          <div><label class="lbl">Member 4 Name</label><input id="f-m4" class="inp" placeholder="Name"/></div>
+          <div><label class="lbl">Member 4 USN</label><input id="f-u4" class="inp" placeholder="USN"/></div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-5 flex items-center gap-3 flex-wrap">
+      <button class="btn btn-p" onclick="addTeam()">✦ Generate ID & Register</button>
+      <button class="btn btn-g" onclick="clearForm()">Clear</button>
+      <span id="f-err" class="hidden text-red-400 text-sm"></span>
+    </div>
+  </div>
+  <div id="add-ok" class="hidden card p-5 mt-4" style="border-color:rgba(52,211,153,.4)">
+    <p class="font-bold text-green-400 mb-3">✓ Team registered!</p>
+    <div class="space-y-2">
+      <div><p class="lbl">Unique Team ID</p>
+        <code id="new-id" class="id-chip" onclick="cp(this.textContent,'ID')"></code></div>
+      <div><p class="lbl">Shareable Profile URL</p>
+        <code id="new-url" class="url-chip" onclick="window.open(this.textContent,'_blank')"></code></div>
+      <div class="flex gap-2 pt-1">
+        <button class="btn btn-p text-xs px-3 py-1.5" onclick="cp(document.getElementById('new-url').textContent,'URL')">📋 Copy URL</button>
+        <button class="btn btn-g text-xs px-3 py-1.5" onclick="window.open(document.getElementById('new-url').textContent,'_blank')">🔗 Open</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── EVENT SETUP ─────────────────────────────────────────────── -->
+<section id="tab-event" class="hidden">
+  <div class="card p-6">
+    <h2 class="font-bold text-slate-100 mb-1">Event Details</h2>
+    <p class="text-slate-500 text-sm mb-5">Shown on every participant profile URL.</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="sm:col-span-2"><label class="lbl">Event Name *</label>
+        <input id="ev-name" class="inp" placeholder="e.g. National Hackathon 2026"/></div>
+      <div><label class="lbl">Type</label>
+        <select id="ev-type" class="inp">
+          <option value="">—</option><option>Hackathon</option><option>Conference</option>
+          <option>Workshop</option><option>Seminar</option><option>Competition</option>
+        </select></div>
+      <div><label class="lbl">Edition</label><input id="ev-ed" class="inp" placeholder="Vol. 1"/></div>
+      <div><label class="lbl">Start Date</label><input id="ev-s" class="inp" type="date"/></div>
+      <div><label class="lbl">End Date</label><input id="ev-e" class="inp" type="date"/></div>
+      <div class="sm:col-span-2"><label class="lbl">Venue</label>
+        <input id="ev-venue" class="inp" placeholder="College name, City"/></div>
+      <div class="sm:col-span-2"><label class="lbl">Organizer</label>
+        <input id="ev-org" class="inp" placeholder="Organizing committee / club"/></div>
+      <div class="sm:col-span-2"><label class="lbl">Description</label>
+        <textarea id="ev-desc" class="inp" rows="2" placeholder="Short description…"></textarea></div>
+    </div>
+    <div class="mt-5 flex items-center gap-3">
+      <button class="btn btn-p" onclick="saveEv()">💾 Save Event</button>
+      <span id="ev-ok" class="hidden text-green-400 text-sm">✓ Saved!</span>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<!-- ── DETAIL MODAL ────────────────────────────────────────────── -->
+<div id="modal" class="modal-bg hidden" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="av h-20 flex items-end px-5 pb-3 rounded-t-2xl relative"
+         style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
+      <div id="m-av" class="av absolute -bottom-6 left-5 w-12 h-12 rounded-xl border-2
+           border-slate-800 shadow-lg text-lg" style="background:#1e2130;color:#818cf8"></div>
+      <button onclick="closeModal()" class="ml-auto text-white/70 hover:text-white text-xl">✕</button>
+    </div>
+    <div class="px-5 pt-10 pb-5">
+      <h2 id="m-name" class="text-xl font-bold text-slate-100"></h2>
+      <div id="m-pills" class="flex flex-wrap gap-1.5 mt-1 mb-4"></div>
+
+      <!-- ID + URL -->
+      <div class="card p-4 mb-4 space-y-3" style="background:#141824">
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="lbl">Unique Team ID</span>
+            <button onclick="cp(document.getElementById('m-id').textContent,'ID')"
+              class="btn btn-g text-xs px-2 py-1">Copy</button>
+          </div>
+          <code id="m-id" class="id-chip"></code>
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="lbl">Shareable Profile URL</span>
+            <button onclick="cp(document.getElementById('m-url').textContent,'URL')"
+              class="btn btn-g text-xs px-2 py-1">Copy</button>
+          </div>
+          <code id="m-url" class="url-chip" onclick="window.open(this.textContent,'_blank')"></code>
+        </div>
+      </div>
+
+      <!-- Team Members -->
+      <p class="lbl mb-2 flex items-center gap-2">
+        <span style="height:1px;flex:1;background:#2d3748"></span>Team Members<span style="height:1px;flex:1;background:#2d3748"></span>
+      </p>
+      <div id="m-members" class="space-y-1.5 mb-4"></div>
+
+      <!-- Details grid -->
+      <p class="lbl mb-2 flex items-center gap-2">
+        <span style="height:1px;flex:1;background:#2d3748"></span>Details<span style="height:1px;flex:1;background:#2d3748"></span>
+      </p>
+      <div id="m-det" class="grid grid-cols-2 gap-3 mb-4"></div>
+
+      <!-- Event -->
+      <p class="lbl mb-2 flex items-center gap-2">
+        <span style="height:1px;flex:1;background:#2d3748"></span>Event<span style="height:1px;flex:1;background:#2d3748"></span>
+      </p>
+      <div id="m-ev" class="grid grid-cols-2 gap-3 mb-5"></div>
+
+      <div style="border-top:1px solid #2d3748" class="pt-4 flex gap-3">
+        <button onclick="window.open(document.getElementById('m-url').textContent,'_blank')"
+          class="btn btn-p flex-1">🔗 Open Profile URL</button>
+        <button onclick="del()"
+          style="border:1px solid rgba(248,113,113,.3);color:#f87171;background:transparent;
+            border-radius:.7rem;padding:.55rem 1rem;cursor:pointer;font-size:.875rem;font-weight:600">
+          🗑 Remove</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmtDate = d => d ? new Date(d+'T00:00:00').toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'}) : '';
+const initials = n => n.trim().split(/\s+/).map(w=>w[0]||'').join('').toUpperCase().slice(0,2)||'?';
+
+let activeId = null;
+
+const toast = (msg, type='ok') => {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2600);
+};
+const cp = (text, label='Text') =>
+  navigator.clipboard.writeText(text).then(()=>toast(`✓ ${label} copied!`));
+
+// Tabs
+const showTab = (name, btn) => {
+  ['list','add','event'].forEach(t=>$('tab-'+t).classList.add('hidden'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  $('tab-'+name).classList.remove('hidden'); btn.classList.add('on');
+  if (name==='list') loadList();
+};
+
+// Event
+const loadEvent = async () => {
+  const ev = await fetch('/api/event').then(r=>r.json());
+  if (ev.name) {
+    $('ev-name').value=ev.name||''; $('ev-type').value=ev.type||'';
+    $('ev-ed').value=ev.edition||''; $('ev-s').value=ev.start_date||'';
+    $('ev-e').value=ev.end_date||''; $('ev-venue').value=ev.venue||'';
+    $('ev-org').value=ev.organizer||''; $('ev-desc').value=ev.description||'';
+    $('hdr-ev').textContent=`📅 ${ev.name}`;
+  } else { $('hdr-ev').textContent='No event configured'; }
+};
+const saveEv = async () => {
+  const name=$('ev-name').value.trim();
+  if (!name){alert('Event name required');return;}
+  await fetch('/api/event',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name,type:$('ev-type').value,edition:$('ev-ed').value.trim(),
+      start_date:$('ev-s').value,end_date:$('ev-e').value,venue:$('ev-venue').value.trim(),
+      organizer:$('ev-org').value.trim(),description:$('ev-desc').value.trim()})});
+  $('hdr-ev').textContent=`📅 ${name}`;
+  $('ev-ok').classList.remove('hidden'); setTimeout(()=>$('ev-ok').classList.add('hidden'),2500);
+  toast('Event saved!');
+};
+
+// Add team
+const addTeam = async () => {
+  $('f-err').classList.add('hidden');
+  const lead_name=$('f-lead').value.trim(), email=$('f-email').value.trim(), team_name=$('f-team').value.trim();
+  if(!lead_name||!email||!team_name){$('f-err').textContent='Team name, lead name and email required.';$('f-err').classList.remove('hidden');return;}
+  const body={team_name,team_size:$('f-size').value,lead_name,usn:$('f-usn').value.trim(),
+    email,phone:$('f-phone').value.trim(),year:$('f-year').value.trim(),
+    payment_status:$('f-pay').value,amount:$('f-amount').value.trim(),utr:$('f-utr').value.trim(),
+    member2:$('f-m2').value.trim(),usn2:$('f-u2').value.trim(),
+    member3:$('f-m3').value.trim(),usn3:$('f-u3').value.trim(),
+    member4:$('f-m4').value.trim(),usn4:$('f-u4').value.trim()};
+  const res=await fetch('/api/participants',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data=await res.json();
+  if(!res.ok){$('f-err').textContent=data.error;$('f-err').classList.remove('hidden');return;}
+  $('new-id').textContent=data.id; $('new-url').textContent=data.profile_url;
+  $('add-ok').classList.remove('hidden'); clearForm(false);
+  $('hdr-cnt').textContent=(parseInt($('hdr-cnt').textContent)+1)+' teams';
+  toast('✦ Team registered!');
+};
+const clearForm=(cs=true)=>{
+  ['f-team','f-lead','f-usn','f-email','f-phone','f-year','f-amount','f-utr',
+   'f-m2','f-u2','f-m3','f-u3','f-m4','f-u4'].forEach(id=>$(id).value='');
+  $('f-size').value='';$('f-pay').value='';$('f-err').classList.add('hidden');
+  if(cs)$('add-ok').classList.add('hidden');
+};
+
+// List
+const PAID_CSS='background:rgba(52,211,153,.15);color:#34d399';
+const PEND_CSS='background:rgba(248,113,113,.15);color:#f87171';
+
+const loadList = async () => {
+  const q=$('search').value||'';
+  const url=q?`/api/participants?search=${encodeURIComponent(q)}`:'/api/participants';
+  const r=await fetch(url).then(r=>r.json());
+  $('hdr-cnt').textContent=`${r.total} team${r.total!==1?'s':''}`;
+  if(!r.participants.length){$('p-list').innerHTML='';$('p-empty').classList.remove('hidden');return;}
+  $('p-empty').classList.add('hidden');
+  $('p-list').innerHTML=r.participants.map(p=>{
+    const paid=p.payment_status==='PAID';
+    const profileUrl=`${location.origin}/p/${p.id}`;
+    return `<div class="pcard" onclick="openModal('${p.id}')">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="av w-10 h-10 rounded-xl text-sm shrink-0">${initials(p.lead_name)}</div>
+        <div class="min-w-0">
+          <p class="font-semibold text-slate-100 text-sm truncate">${esc(p.team_name)}</p>
+          <p class="text-slate-500 text-xs truncate">${esc(p.lead_name)}</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-1.5 mb-3">
+        <span class="pill" style="${paid?PAID_CSS:PEND_CSS}">${esc(p.payment_status||'—')}</span>
+        ${p.amount?`<span class="pill" style="background:rgba(99,102,241,.15);color:#818cf8">${esc(p.amount)}</span>`:''}
+        ${p.team_size?`<span class="pill" style="background:rgba(51,65,85,.8);color:#94a3b8">${esc(p.team_size.replace(/\s*\(.*?\)/,''))}</span>`:''}
+      </div>
+      <code class="id-chip mb-1.5" onclick="event.stopPropagation();cp('${p.id}','ID')">🔑 ${p.id}</code>
+      <code class="url-chip text-xs" onclick="event.stopPropagation();window.open('${profileUrl}','_blank')">🔗 ${profileUrl}</code>
+      <p class="text-slate-600 text-xs mt-2">${p.year||''}</p>
+    </div>`;
+  }).join('');
+};
+
+const clearAll = async()=>{
+  if(!confirm('Remove ALL teams from the CSV? This cannot be undone.'))return;
+  const r=await fetch('/api/participants').then(r=>r.json());
+  await Promise.all(r.participants.map(p=>fetch(`/api/participants/${p.id}`,{method:'DELETE'})));
+  loadList(); toast('All teams removed','err');
+};
+
+// Modal
+const det=(l,v)=>v?`<div><p class="lbl">${l}</p><p class="text-sm text-slate-300">${esc(v)}</p></div>`:'';
+
+const openModal = async id => {
+  activeId=id;
+  const r=await fetch(`/api/participants/${id}`).then(r=>r.json());
+  const p=r.participant, ev=r.event;
+  $('m-av').textContent=initials(p.lead_name);
+  $('m-name').textContent=p.team_name;
+  $('m-id').textContent=p.id;
+  $('m-url').textContent=p.profile_url;
+
+  const paid=p.payment_status==='PAID';
+  $('m-pills').innerHTML=[
+    `<span class="pill" style="${paid?PAID_CSS:PEND_CSS}">${esc(p.payment_status||'—')}</span>`,
+    p.amount?`<span class="pill" style="background:rgba(99,102,241,.15);color:#818cf8">${esc(p.amount)}</span>`:'',
+    p.team_size?`<span class="pill" style="background:rgba(51,65,85,.8);color:#94a3b8">${esc(p.team_size.replace(/\s*\(.*?\)/,''))}</span>`:'',
+  ].join('');
+
+  // Members
+  const members=[[p.lead_name,p.usn,'Lead']];
+  if(p.member2)members.push([p.member2,p.usn2,'M2']);
+  if(p.member3)members.push([p.member3,p.usn3,'M3']);
+  if(p.member4)members.push([p.member4,p.usn4,'M4']);
+  $('m-members').innerHTML=members.map(([name,usn,role])=>`
+    <div class="member-row">
+      <span class="pill" style="background:rgba(99,102,241,.2);color:#818cf8;font-size:.65rem">${role}</span>
+      <span class="text-slate-100 font-medium">${esc(name)}</span>
+      ${usn?`<span class="text-slate-500 ml-auto font-mono text-xs">${esc(usn)}</span>`:''}
+    </div>`).join('');
+
+  $('m-det').innerHTML=[
+    det('Email',p.email), det('Phone',p.phone),
+    det('Year & Sem',p.year), det('UTR',p.utr),
+    det('Registered',p.registered_at),
+  ].join('');
+
+  $('m-ev').innerHTML=[
+    det('Event',ev.name), det('Type',ev.type),
+    det('Venue',ev.venue), det('Organizer',ev.organizer),
+    det('Start Date',fmtDate(ev.start_date)), det('End Date',fmtDate(ev.end_date)),
+    ev.description?`<div class="col-span-2">${det('About',ev.description)}</div>`:'',
+  ].join('');
+
+  $('modal').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+};
+const closeModal=()=>{$('modal').classList.add('hidden');document.body.style.overflow='';activeId=null;};
+const del=async()=>{
+  if(!activeId||!confirm('Remove this team from the CSV?'))return;
+  await fetch(`/api/participants/${activeId}`,{method:'DELETE'});
+  closeModal(); loadList(); toast('Team removed','err');
+};
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+async function handleLogout() {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/login';
+}
+
+loadEvent(); loadList();
+</script>
+</body>
+</html>

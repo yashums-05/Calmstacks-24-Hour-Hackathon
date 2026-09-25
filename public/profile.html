@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Team Profile</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body{font-family:'Inter',system-ui,sans-serif;background:#0f1117;color:#e2e8f0;min-height:100vh}
+  .lbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b}
+  .val{font-size:.95rem;color:#e2e8f0;font-weight:500;margin-top:.15rem}
+  .card{background:#1e2130;border:1px solid #2d3748;border-radius:1rem}
+  .pill{display:inline-flex;align-items:center;padding:3px 12px;border-radius:999px;font-size:.75rem;font-weight:700}
+  .id-box{font-family:'Courier New',monospace;background:rgba(99,102,241,.1);
+    border:1px solid rgba(99,102,241,.3);border-radius:.6rem;padding:.75rem 1rem;
+    color:#818cf8;font-size:.78rem;word-break:break-all;letter-spacing:.04em}
+  .member-link{display:flex;align-items:center;gap:.75rem;
+    background:#141824;border:1px solid #2d3748;border-radius:.75rem;
+    padding:.75rem 1rem;text-decoration:none;transition:.15s}
+  .member-link:hover{border-color:#6366f1;transform:translateX(3px)}
+  .member-id{font-family:'Courier New',monospace;font-size:.62rem;color:#818cf8;
+    background:rgba(99,102,241,.1);border-radius:.4rem;padding:2px 6px;
+    border:1px solid rgba(99,102,241,.2)}
+  .av{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:bold}
+  .section-title{display:flex;align-items:center;gap:.75rem;font-size:.72rem;
+    font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#4a5568;margin-bottom:1rem}
+  .section-title::before,.section-title::after{content:'';flex:1;height:1px;background:#2d3748}
+  .role-badge-lead{background:rgba(99,102,241,.15);color:#818cf8}
+  .role-badge-m2  {background:rgba(236,72,153,.12);color:#f472b6}
+  .role-badge-m3  {background:rgba(245,158,11,.12);color:#fbbf24}
+  .role-badge-m4  {background:rgba(16,185,129,.12);color:#34d399}
+  @media print{
+    .no-print{display:none!important}
+    body{background:#fff;color:#111}
+    .card{background:#fff;border-color:#ddd}
+    .id-box{background:#f5f3ff;border-color:#c4b5fd;color:#4338ca}
+    .member-link{background:#f8fafc;border-color:#e2e8f0}
+  }
+</style>
+</head>
+<body>
+<div style="background:linear-gradient(90deg,#6366f1,#8b5cf6,#ec4899);height:4px"></div>
+
+<div class="max-w-xl mx-auto px-4 py-8">
+  <div id="loading" class="text-center py-20 text-slate-500">
+    <div class="text-4xl mb-3 animate-pulse">⬡</div>
+    <p class="text-sm">Loading team profile…</p>
+  </div>
+  <div id="error-state" class="hidden text-center py-20">
+    <div class="text-5xl mb-3">🔍</div>
+    <h2 class="text-xl font-bold text-slate-100 mb-2">Team Not Found</h2>
+    <p class="text-slate-500 text-sm mb-5">This team ID does not exist.</p>
+    <a href="/" class="inline-block px-5 py-2.5 rounded-xl font-semibold text-sm text-white no-print"
+       style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">← Dashboard</a>
+  </div>
+
+  <div id="profile" class="hidden space-y-4">
+
+    <!-- Header -->
+    <div class="card overflow-hidden">
+      <div class="h-28 relative" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
+        <div id="av" class="av absolute -bottom-8 left-5 w-16 h-16 rounded-2xl shadow-xl text-2xl"
+          style="border:3px solid #1e2130;background:#1e2130;color:#818cf8"></div>
+      </div>
+      <div class="px-5 pt-11 pb-5">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h1 id="team-name" class="text-2xl font-bold text-slate-100"></h1>
+            <p id="lead-name" class="text-slate-400 text-sm mt-0.5"></p>
+            <div id="pills" class="flex flex-wrap gap-1.5 mt-2"></div>
+          </div>
+          <div class="no-print flex flex-col gap-2 shrink-0">
+            <button onclick="window.print()"
+              class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-100">🖨 Print</button>
+            <a href="/" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-100 text-center no-print">← Home</a>
+            <button onclick="handleLogout()" class="text-xs px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 text-center no-print">🚪 Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team unique ID -->
+    <div class="card p-5">
+      <div class="flex items-center justify-between mb-2">
+        <p class="lbl">Unique Team ID</p>
+        <button id="copy-btn" onclick="copyId()"
+          class="no-print text-xs px-3 py-1 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-100 hover:border-indigo-500 transition-colors">📋 Copy ID</button>
+      </div>
+      <div id="uid" class="id-box"></div>
+    </div>
+
+    <!-- Members — each with their own ID and link -->
+    <div class="card p-5">
+      <p class="section-title">Team Members — Individual Profiles</p>
+      <div id="members" class="space-y-2.5"></div>
+    </div>
+
+    <!-- Registration details -->
+    <div class="card p-5">
+      <p class="section-title">Registration Details</p>
+      <div id="det" class="grid grid-cols-2 gap-4"></div>
+    </div>
+
+    <!-- Event -->
+    <div class="card p-5">
+      <p class="section-title">Event Details</p>
+      <div id="ev-det" class="grid grid-cols-2 gap-4"></div>
+    </div>
+
+    <p class="text-center text-slate-600 text-xs no-print pb-4">
+      Each member has their own unique profile URL.<br/>
+      Powered by Hackathon Participant ID System.
+    </p>
+  </div>
+</div>
+
+<script>
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmtDate = d => d ? new Date(d+'T00:00:00').toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'}) : '';
+const initials = n => n.trim().split(/\s+/).map(w=>w[0]||'').join('').toUpperCase().slice(0,2)||'?';
+const row = (l,v) => v ? `<div><p class="lbl">${l}</p><p class="val">${esc(v)}</p></div>` : '';
+
+const ROLE_CSS = {'Team Lead':'role-badge-lead','Member 2':'role-badge-m2','Member 3':'role-badge-m3','Member 4':'role-badge-m4'};
+
+const copyId = () => {
+  navigator.clipboard.writeText(document.getElementById('uid').textContent).then(() => {
+    const btn=document.getElementById('copy-btn');
+    btn.textContent='✓ Copied!'; btn.style.color='#34d399'; btn.style.borderColor='#34d399';
+    setTimeout(()=>{btn.textContent='📋 Copy ID';btn.style.color='';btn.style.borderColor='';},1800);
+  });
+};
+
+const id = location.pathname.replace('/p/','').replace(/\//g,'').trim();
+
+fetch(`/api/participants/${id}`)
+  .then(async r => { if(!r.ok) throw new Error(); return r.json(); })
+  .then(({participant:p, members, event:ev}) => {
+    document.title = `${p.team_name} — Team Profile`;
+
+    document.getElementById('av').textContent = initials(p.lead_name);
+    document.getElementById('team-name').textContent = p.team_name;
+    document.getElementById('lead-name').textContent = `Lead: ${p.lead_name}`;
+
+    const paid = p.payment_status;
+    document.getElementById('pills').innerHTML = [
+      paid==='PAID'   ? '<span class="pill" style="background:rgba(16,185,129,.15);color:#10b981">PAID</span>' : '',
+      paid==='PENDING'? '<span class="pill" style="background:rgba(239,68,68,.12);color:#ef4444">PENDING</span>' : '',
+      p.amount ? `<span class="pill" style="background:rgba(99,102,241,.15);color:#818cf8">${esc(p.amount)}</span>` : '',
+      p.team_size ? `<span class="pill" style="background:rgba(51,65,85,.8);color:#94a3b8">${esc(p.team_size.replace(/\s*\(.*?\)/,''))}</span>` : '',
+    ].join('');
+
+    document.getElementById('uid').textContent = p.id;
+
+    // Members with individual IDs & links
+    document.getElementById('members').innerHTML = members.map(m => {
+      const rc = ROLE_CSS[m.role] || 'role-badge-lead';
+      return `
+        <a href="/m/${m.id}" class="member-link" style="text-decoration:none">
+          <div class="av w-10 h-10 rounded-xl text-sm shrink-0">${initials(m.name)}</div>
+          <div class="flex-1 min-w-0">
+            <p class="text-slate-100 font-semibold text-sm">${esc(m.name)}</p>
+            <p class="text-slate-500 text-xs font-mono">${esc(m.usn || '—')}</p>
+            <span class="member-id mt-0.5 inline-block">${m.id.slice(0,8)}…</span>
+          </div>
+          <div class="flex flex-col items-end gap-1.5 shrink-0">
+            <span class="pill ${rc}">${esc(m.role)}</span>
+            <span class="text-indigo-400 text-xs">View Profile →</span>
+          </div>
+        </a>`;
+    }).join('');
+
+    document.getElementById('det').innerHTML = [
+      row('Email', p.email),
+      row('Phone', p.phone),
+      row('Year & Sem', p.year),
+      row('UTR / Transaction ID', p.utr),
+      row('Registered', p.registered_at),
+    ].join('');
+
+    document.getElementById('ev-det').innerHTML = [
+      row('Event Name', ev.name),
+      row('Type', ev.type),
+      row('Edition', ev.edition),
+      row('Venue', ev.venue),
+      row('Organizer', ev.organizer),
+      row('Start Date', fmtDate(ev.start_date)),
+      row('End Date',   fmtDate(ev.end_date)),
+      ev.description ? `<div class="col-span-2">${row('About',ev.description)}</div>` : '',
+    ].join('');
+
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('profile').classList.remove('hidden');
+  })
+  .catch(() => {
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('error-state').classList.remove('hidden');
+  });
+
+async function handleLogout() {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/login';
+}
+</script>
+</body>
+</html>
