@@ -45,14 +45,23 @@ function isAuthenticated(req) {
   return verifyToken(token);
 }
 
+function requireAdmin(req, res, next) {
+  if (isAuthenticated(req)) return next();
+  if (req.path.startsWith('/api/')) {
+    return res.status(401).json({ error: 'Admin authorization required. Please login.' });
+  }
+  return res.redirect(`/login?redirect=${encodeURIComponent(req.originalUrl)}`);
+}
+
 const host = req => `${req.protocol}://${req.get('host')}`;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// ── Auth Public Endpoints ──────────────────────────────────────────
+// ── Auth Endpoints ─────────────────────────────────────────────────
 app.get('/login', (req, res) => {
-  if (isAuthenticated(req)) return res.redirect('/');
+  if (isAuthenticated(req)) return res.redirect('/admin');
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
@@ -82,46 +91,12 @@ app.get('/api/auth/me', (req, res) => {
 
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
-// ── Authentication Guard Middleware ─────────────────────────────────
-app.use((req, res, next) => {
-  if (isAuthenticated(req)) {
-    return next();
-  }
-  if (req.path.startsWith('/api/')) {
-    return res.status(401).json({ error: 'Unauthorized. Please login.' });
-  }
-  res.redirect(`/login?redirect=${encodeURIComponent(req.originalUrl)}`);
-});
-
-// ── Protected Static Assets & Routes ───────────────────────────────
-app.use(express.static(path.join(__dirname, 'public')));
-
-// ── Event ──────────────────────────────────────────────────────────
+// ── Public APIs (Members & Teams View) ──────────────────────────────
 app.get('/api/event', (req, res) => res.json(db.getEvent() || {}));
-app.post('/api/event', (req, res) => {
-  if (!req.body.name) return res.status(400).json({ error: 'Event name required' });
-  res.json(db.saveEvent(req.body));
-});
 
-// ── Teams ──────────────────────────────────────────────────────────
 app.get('/api/participants', (req, res) => {
   const list = db.getTeams(req.query.search);
   res.json({ participants: list, total: list.length });
-});
-
-app.post('/api/participants', (req, res) => {
-  const { lead_name, email, team_name } = req.body;
-  if (!lead_name || !email || !team_name)
-    return res.status(400).json({ error: 'team_name, lead_name and email are required' });
-  const { team, members } = db.addTeam(req.body);
-  res.status(201).json({
-    ...team,
-    profile_url: `${host(req)}/p/${team.id}`,
-    members: members.map(m => ({
-      ...m,
-      profile_url: `${host(req)}/m/${m.id}`,
-    })),
-  });
 });
 
 app.get('/api/participants/:id', (req, res) => {
@@ -138,19 +113,6 @@ app.get('/api/participants/:id', (req, res) => {
   });
 });
 
-app.put('/api/participants/:id', (req, res) => {
-  const t = db.updateTeam(req.params.id, req.body);
-  if (!t) return res.status(404).json({ error: 'Not found' });
-  res.json({ ...t, profile_url: `${host(req)}/p/${t.id}` });
-});
-
-app.delete('/api/participants/:id', (req, res) => {
-  const r = db.deleteTeam(req.params.id);
-  if (!r.deleted) return res.status(404).json({ error: 'Not found' });
-  res.json({ success: true });
-});
-
-// ── Members ────────────────────────────────────────────────────────
 app.get('/api/members', (req, res) => {
   const list = db.getAllMembers(req.query.search);
   res.json({ members: list, total: list.length });
@@ -172,13 +134,46 @@ app.get('/api/members/:id', (req, res) => {
   });
 });
 
-app.put('/api/members/:id', (req, res) => {
+// ── Admin Protected APIs ────────────────────────────────────────────
+app.post('/api/event', requireAdmin, (req, res) => {
+  if (!req.body.name) return res.status(400).json({ error: 'Event name required' });
+  res.json(db.saveEvent(req.body));
+});
+
+app.post('/api/participants', requireAdmin, (req, res) => {
+  const { lead_name, email, team_name } = req.body;
+  if (!lead_name || !email || !team_name)
+    return res.status(400).json({ error: 'team_name, lead_name and email are required' });
+  const { team, members } = db.addTeam(req.body);
+  res.status(201).json({
+    ...team,
+    profile_url: `${host(req)}/p/${team.id}`,
+    members: members.map(m => ({
+      ...m,
+      profile_url: `${host(req)}/m/${m.id}`,
+    })),
+  });
+});
+
+app.put('/api/participants/:id', requireAdmin, (req, res) => {
+  const t = db.updateTeam(req.params.id, req.body);
+  if (!t) return res.status(404).json({ error: 'Not found' });
+  res.json({ ...t, profile_url: `${host(req)}/p/${t.id}` });
+});
+
+app.delete('/api/participants/:id', requireAdmin, (req, res) => {
+  const r = db.deleteTeam(req.params.id);
+  if (!r.deleted) return res.status(404).json({ error: 'Not found' });
+  res.json({ success: true });
+});
+
+app.put('/api/members/:id', requireAdmin, (req, res) => {
   const m = db.updateMember(req.params.id, req.body);
   if (!m) return res.status(404).json({ error: 'Not found' });
   res.json({ ...m, profile_url: `${host(req)}/m/${m.id}` });
 });
 
-app.post('/api/members', (req, res) => {
+app.post('/api/members', requireAdmin, (req, res) => {
   const { team_id, name, usn, role } = req.body;
   if (!team_id || !name) return res.status(400).json({ error: 'team_id and name are required' });
   const team = db.getTeam(team_id);
@@ -187,16 +182,23 @@ app.post('/api/members', (req, res) => {
   res.status(201).json({ ...m, profile_url: `${host(req)}/m/${m.id}` });
 });
 
-// ── Export ─────────────────────────────────────────────────────────
-app.get('/api/export', (req, res) => {
+app.get('/api/export', requireAdmin, (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="hackathon-${Date.now()}.json"`);
   res.json(db.exportAll());
 });
 
 // ── Pages ──────────────────────────────────────────────────────────
-app.get('/p/:id',    (req, res) => res.sendFile(path.join(__dirname, 'public', 'profile.html')));
-app.get('/m/:id',    (req, res) => res.sendFile(path.join(__dirname, 'public', 'member.html')));
-app.get('/admin',    (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+// Public direct member & team profiles
+app.get('/m/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'member.html')));
+app.get('/p/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'profile.html')));
+
+// Admin protected page
+app.get('/admin', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+
+// Default to home page / dashboard
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.use((req, res) => res.redirect('/'));
+
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`\n✦ Hackathon Participant ID System`);

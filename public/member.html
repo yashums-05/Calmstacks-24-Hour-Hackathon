@@ -736,6 +736,7 @@ const tryUnlock = () => {
   const target = _memberName.trim().replace(/\s+/g, ' ');
   if (typed && typed.toLowerCase() === target.toLowerCase()) {
     sessionStorage.setItem(sessionKey, '1');
+    document.title = `${_memberName} — CalmStacks 24H 2026`;
     document.getElementById('gate').classList.add('hidden');
     err.classList.add('hidden');
     document.getElementById('profile').classList.remove('hidden');
@@ -748,16 +749,9 @@ const tryUnlock = () => {
   }
 };
 
-async function handleLogout() {
-  await fetch('/api/logout', { method: 'POST' });
-  window.location.href = '/login';
-}
-
 fetch(`/api/members/${memberId}`)
   .then(async r => { if(!r.ok) throw 0; return r.json(); })
   .then(({ member:m, team }) => {
-
-    document.title = `${m.name} — CalmStacks 24H 2026`;
     _memberName = m.name;
 
     /* avatar */
@@ -776,6 +770,7 @@ fetch(`/api/members/${memberId}`)
 
     /* already unlocked this browser session → skip gate */
     if (sessionStorage.getItem(sessionKey)) {
+      document.title = `${m.name} — CalmStacks 24H 2026`;
       document.getElementById('gate').classList.add('hidden');
       document.getElementById('profile').classList.remove('hidden');
     }
