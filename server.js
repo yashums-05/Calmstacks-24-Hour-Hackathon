@@ -68,6 +68,10 @@ app.use(express.static(PUBLIC_DIR));
 
 // ── Auth Endpoints ─────────────────────────────────────────────────
 app.get('/login', (req, res) => {
+  const redirect = req.query.redirect;
+  if (redirect && (redirect.startsWith('/m/') || redirect.startsWith('/p/') || redirect.startsWith('/participants/'))) {
+    return res.redirect(redirect);
+  }
   if (isAuthenticated(req)) return res.redirect('/admin');
   res.sendFile(path.join(PUBLIC_DIR, 'login.html'));
 });

@@ -92,6 +92,15 @@
 </div>
 
 <script>
+// If accidentally arrived with participant redirect, immediately bounce directly to participant page
+(function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const redirect = urlParams.get('redirect');
+  if (redirect && (redirect.startsWith('/m/') || redirect.startsWith('/p/') || redirect.startsWith('/participants/'))) {
+    window.location.replace(redirect);
+  }
+})();
+
 function togglePassword() {
   const p = document.getElementById('password');
   p.type = p.type === 'password' ? 'text' : 'password';
