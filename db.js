@@ -1,44 +1,36 @@
 /**
- * db.js — Persistent Data Store with GitHub Cloud Auto-Sync, Memory Cache & Multi-Admin Management
- *
- * ID Formats:
- *   Team ID   : HACK-001, HACK-002, ...
- *   Member ID : HACK-001-M1, HACK-001-M2, ...
+ * db.js — 100% File-Based Persistent Data Store & Multi-Admin Management
+ * 
+ * Stores all data in:
+ *   - data/store.json
+ *   - data/participants.csv
+ *   - data/members.csv
+ *   - dataset.js
  */
 
-const fs    = require('node:fs');
-const path  = require('node:path');
-const os    = require('node:os');
-const https = require('node:https');
-
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
-const GITHUB_REPO  = process.env.GITHUB_REPO  || 'yashums-05/Calmstacks-24-Hour-Hackathon';
-const REMOTE_PATH  = '/contents/data/store.json';
+const fs   = require('node:fs');
+const path = require('node:path');
+const os   = require('node:os');
 
 let defaultData = { teams: [], members: [], event: null };
 try { defaultData = require('./dataset'); } catch (e) {}
 
-const BASE_DIR   = fs.existsSync(path.join(__dirname, 'data'))
-  ? __dirname
-  : (fs.existsSync(path.join(__dirname, '..', 'data'))
-    ? path.join(__dirname, '..')
-    : process.cwd());
+const BASE_DIR    = __dirname;
+const DATA_DIR    = path.join(BASE_DIR, 'data');
+const TEAMS_CSV   = path.join(DATA_DIR, 'participants.csv');
+const MEMBERS_CSV = path.join(DATA_DIR, 'members.csv');
+const STORE_JSON  = path.join(DATA_DIR, 'store.json');
+const DATASET_JS  = path.join(BASE_DIR, 'dataset.js');
 
-const DATA_DIR   = path.join(BASE_DIR, 'data');
-const SOURCE_CSV = path.join(BASE_DIR, 'Untitled spreadsheet - Sheet1 (1).csv');
-const TEAMS_CSV  = path.join(DATA_DIR, 'participants.csv');
-const MEMBERS_CSV= path.join(DATA_DIR, 'members.csv');
-const EVENT_JSON = path.join(DATA_DIR, 'event.json');
+try { if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (e) {}
 
-const TMP_DATA_DIR   = path.join(os.tmpdir(), 'calmstacks_data');
+const TMP_DATA_DIR    = path.join(os.tmpdir(), 'calmstacks_data');
 try { if (!fs.existsSync(TMP_DATA_DIR)) fs.mkdirSync(TMP_DATA_DIR, { recursive: true }); } catch (e) {}
+const TMP_STORE_JSON  = path.join(TMP_DATA_DIR, 'store.json');
+const TMP_TEAMS_CSV   = path.join(TMP_DATA_DIR, 'participants.csv');
+const TMP_MEMBERS_CSV = path.join(TMP_DATA_DIR, 'members.csv');
 
-const TMP_TEAMS_CSV  = path.join(TMP_DATA_DIR, 'participants.csv');
-const TMP_MEMBERS_CSV= path.join(TMP_DATA_DIR, 'members.csv');
-const TMP_EVENT_JSON = path.join(TMP_DATA_DIR, 'event.json');
-const TMP_STORE_JSON = path.join(TMP_DATA_DIR, 'store.json');
-
-// ── Default Primary Admin ──────────────────────────────────────────
+// ── Default Primary Super Admin ────────────────────────────────────
 const PRIMARY_ADMIN = {
   userid:     'yashu',
   password:   'Yashu@2005',
@@ -161,31 +153,49 @@ let inMemoryTeams   = [];
 let inMemoryMembers = [];
 let inMemoryAdmins  = [PRIMARY_ADMIN];
 let inMemoryEvent   = defaultData.event || null;
-let lastSha         = null;
-let lastFetchTime   = 0;
 
 function initLocalStore() {
-  if (fs.existsSync(TMP_STORE_JSON)) {
+  // 1. Try local data/store.json
+  if (fs.existsSync(STORE_JSON)) {
     try {
-      const parsed = JSON.parse(fs.readFileSync(TMP_STORE_JSON, 'utf8'));
+      const parsed = JSON.parse(fs.readFileSync(STORE_JSON, 'utf8'));
       if (parsed.teams?.length) {
         inMemoryTeams   = parsed.teams;
-        inMemoryMembers = parsed.members || [];
+        inMemoryMembers = parsed.members || inMemoryTeams.flatMap(membersFromTeam);
         inMemoryEvent   = parsed.event   || inMemoryEvent;
         if (parsed.admins && Array.isArray(parsed.admins)) {
-          inMemoryAdmins = parsed.admins;
+          const hasPrimary = parsed.admins.some(a => a.userid === PRIMARY_ADMIN.userid);
+          inMemoryAdmins = hasPrimary ? parsed.admins : [PRIMARY_ADMIN, ...parsed.admins];
         }
         return;
       }
     } catch (e) {}
   }
 
-  let teams = readCSVFile(TMP_TEAMS_CSV, TEAM_COLS);
-  let members = readCSVFile(TMP_MEMBERS_CSV, MEMBER_COLS);
+  // 2. Try temp store
+  if (fs.existsSync(TMP_STORE_JSON)) {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(TMP_STORE_JSON, 'utf8'));
+      if (parsed.teams?.length) {
+        inMemoryTeams   = parsed.teams;
+        inMemoryMembers = parsed.members || inMemoryTeams.flatMap(membersFromTeam);
+        inMemoryEvent   = parsed.event   || inMemoryEvent;
+        if (parsed.admins && Array.isArray(parsed.admins)) {
+          const hasPrimary = parsed.admins.some(a => a.userid === PRIMARY_ADMIN.userid);
+          inMemoryAdmins = hasPrimary ? parsed.admins : [PRIMARY_ADMIN, ...parsed.admins];
+        }
+        return;
+      }
+    } catch (e) {}
+  }
 
-  if (!teams.length) teams = readCSVFile(TEAMS_CSV, TEAM_COLS);
-  if (!members.length) members = readCSVFile(MEMBERS_CSV, MEMBER_COLS);
+  // 3. Try CSV files
+  let teams = readCSVFile(TEAMS_CSV, TEAM_COLS);
+  let members = readCSVFile(MEMBERS_CSV, MEMBER_COLS);
+  if (!teams.length) teams = readCSVFile(TMP_TEAMS_CSV, TEAM_COLS);
+  if (!members.length) members = readCSVFile(TMP_MEMBERS_CSV, MEMBER_COLS);
 
+  // 4. Try dataset.js
   if (!teams.length && defaultData.teams?.length) teams = [...defaultData.teams];
   if (!members.length && defaultData.members?.length) members = [...defaultData.members];
 
@@ -195,210 +205,49 @@ function initLocalStore() {
 
 initLocalStore();
 
-function getToken() {
-  return (process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '').trim();
-}
-
-function getRepo() {
-  return (process.env.GITHUB_REPO || 'yashums-05/Calmstacks-24-Hour-Hackathon').trim();
-}
-
-// ── GitHub API Sync ────────────────────────────────────────────────
-function githubRequest(endpoint, method = 'GET', body = null) {
-  const token = getToken();
-  const repo  = getRepo();
-  if (!token) return Promise.resolve({ status: 400, error: 'GITHUB_TOKEN is not set in environment variables' });
-  return new Promise((resolve) => {
-    const payload = body ? JSON.stringify(body) : null;
-    const req = https.request({
-      hostname: 'api.github.com',
-      path: '/repos/' + repo + endpoint,
-      method,
-      headers: {
-        'User-Agent': 'CalmStacks-Hackathon-App',
-        'Authorization': 'Bearer ' + token,
-        'Accept': 'application/vnd.github.v3+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        ...(payload ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {})
-      },
-      timeout: 9000
-    }, res => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        try {
-          resolve({ status: res.statusCode, data: JSON.parse(data) });
-        } catch (e) {
-          resolve({ status: res.statusCode, raw: data });
-        }
-      });
-    });
-    req.on('error', err => resolve({ status: 500, error: err.message }));
-    req.on('timeout', () => { req.destroy(); resolve({ status: 408, error: 'GitHub API request timed out' }); });
-    if (payload) req.write(payload);
-    req.end();
-  });
-}
-
-async function fetchRemoteStore(force = false) {
-  const token = getToken();
-  if (!token) return false;
-  const now = Date.now();
-  if (!force && (now - lastFetchTime < 3000)) return true; // 3s cache
-  lastFetchTime = now;
-
-  try {
-    const res = await githubRequest(REMOTE_PATH);
-    if (res.status === 200 && res.data?.content) {
-      lastSha = res.data.sha;
-      const jsonStr = Buffer.from(res.data.content, 'base64').toString('utf8');
-      const parsed = JSON.parse(jsonStr);
-      if (parsed.teams && Array.isArray(parsed.teams) && parsed.teams.length > 0) {
-        inMemoryTeams   = parsed.teams;
-        inMemoryMembers = parsed.members || inMemoryTeams.flatMap(membersFromTeam);
-        inMemoryEvent   = parsed.event   || inMemoryEvent;
-        if (parsed.admins && Array.isArray(parsed.admins)) {
-          // Ensure primary admin always exists
-          const hasPrimary = parsed.admins.some(a => a.userid === PRIMARY_ADMIN.userid);
-          inMemoryAdmins = hasPrimary ? parsed.admins : [PRIMARY_ADMIN, ...parsed.admins];
-        }
-        try { fs.writeFileSync(TMP_STORE_JSON, jsonStr, 'utf8'); } catch (e) {}
-        return true;
-      }
-    }
-  } catch (e) {
-    console.error('[DB Remote Fetch] Error:', e.message);
-  }
-  return false;
-}
-
-async function persistStore() {
-  const jsonStr = JSON.stringify({
+function persistToFile() {
+  const data = {
     teams: inMemoryTeams,
     members: inMemoryMembers,
     admins: inMemoryAdmins,
     event: inMemoryEvent,
     updated_at: new Date().toISOString()
-  }, null, 2);
+  };
 
+  const jsonStr = JSON.stringify(data, null, 2);
+
+  // Write to data/store.json
+  try { fs.writeFileSync(STORE_JSON, jsonStr, 'utf8'); } catch (e) {}
+  // Write to /tmp/calmstacks_data/store.json
   try { fs.writeFileSync(TMP_STORE_JSON, jsonStr, 'utf8'); } catch (e) {}
+
+  // Write to CSV files
   writeCSVFile(TEAMS_CSV, TEAM_COLS, inMemoryTeams, TMP_TEAMS_CSV);
   writeCSVFile(MEMBERS_CSV, MEMBER_COLS, inMemoryMembers, TMP_MEMBERS_CSV);
 
-  const token = getToken();
-  if (!token) {
-    console.warn('[DB Persist] No GITHUB_TOKEN configured; data saved locally only.');
-    return false;
-  }
-
-  // Sync to GitHub and wait for confirmation
+  // Write to dataset.js
   try {
-    if (!lastSha) {
-      const getRes = await githubRequest(REMOTE_PATH);
-      if (getRes.status === 200 && getRes.data?.sha) {
-        lastSha = getRes.data.sha;
-      }
-    }
+    const datasetContent = 'module.exports = ' + jsonStr + ';\n';
+    fs.writeFileSync(DATASET_JS, datasetContent, 'utf8');
+  } catch (e) {}
 
-    const b64 = Buffer.from(jsonStr, 'utf8').toString('base64');
-    const putBody = {
-      message: 'Sync hackathon participant store [auto-save]',
-      content: b64,
-      branch: 'main',
-      committer: { name: 'CalmStacks Bot', email: 'bot@calmstacks.dev' },
-      author: { name: 'CalmStacks Bot', email: 'bot@calmstacks.dev' },
-      ...(lastSha ? { sha: lastSha } : {})
-    };
-
-    let putRes = await githubRequest(REMOTE_PATH, 'PUT', putBody);
-    if (putRes.status === 200 || putRes.status === 201) {
-      lastSha = putRes.data?.content?.sha || putRes.data?.commit?.sha || null;
-      console.log('[DB Persist] Successfully persisted to GitHub repository!');
-      return true;
-    } else if (putRes.status === 409 || putRes.status === 422) {
-      // Conflict or mismatched sha: fetch fresh sha and retry once
-      const getRes = await githubRequest(REMOTE_PATH);
-      if (getRes.status === 200 && getRes.data?.sha) {
-        lastSha = getRes.data.sha;
-        putBody.sha = lastSha;
-        const retryRes = await githubRequest(REMOTE_PATH, 'PUT', putBody);
-        if (retryRes.status === 200 || retryRes.status === 201) {
-          lastSha = retryRes.data?.content?.sha || retryRes.data?.commit?.sha || null;
-          console.log('[DB Persist] Successfully persisted to GitHub on retry!');
-          return true;
-        }
-      }
-    }
-    console.error('[DB Persist] GitHub API Error:', putRes.status, putRes.data || putRes.error);
-  } catch (e) {
-    console.error('[DB Persist] Exception while saving to GitHub:', e.message);
-  }
-  return false;
+  return true;
 }
-
-// Initial remote fetch
-fetchRemoteStore(true).catch(() => {});
 
 // ── Exported API ───────────────────────────────────────────────────
 module.exports = {
 
-  // ── Sync Helper & Diagnostics ───────────────────────────────────
-  async sync(force = false) {
-    await fetchRemoteStore(force);
-    return true;
+  sync() {
+    return Promise.resolve(true);
   },
 
-  async getSyncStatus() {
-    const token = getToken();
-    const repo  = getRepo();
-    if (!token) {
-      return {
-        configured: false,
-        status: 'error',
-        message: 'GITHUB_TOKEN environment variable is not set in Vercel.',
-        repo
-      };
-    }
-    try {
-      const res = await githubRequest(REMOTE_PATH);
-      if (res.status === 200) {
-        return {
-          configured: true,
-          status: 'connected',
-          message: 'Connected & auto-syncing with GitHub repo',
-          repo,
-          lastSha: res.data?.sha || lastSha
-        };
-      } else if (res.status === 401 || res.status === 403) {
-        return {
-          configured: true,
-          status: 'error',
-          message: `GitHub authentication failed (${res.status}): ${res.data?.message || 'Check token permissions (Contents: Read & Write)'}`,
-          repo
-        };
-      } else if (res.status === 404) {
-        return {
-          configured: true,
-          status: 'warning',
-          message: `Repository or path not found: ${repo}${REMOTE_PATH}`,
-          repo
-        };
-      } else {
-        return {
-          configured: true,
-          status: 'error',
-          message: `GitHub API response (${res.status}): ${res.data?.message || res.error || 'Unknown error'}`,
-          repo
-        };
-      }
-    } catch (e) {
-      return {
-        configured: true,
-        status: 'error',
-        message: `Network error connecting to GitHub: ${e.message}`,
-        repo
-      };
-    }
+  getSyncStatus() {
+    return Promise.resolve({
+      configured: true,
+      status: 'connected',
+      message: 'Local File Storage Active (data/store.json & dataset.js)',
+      file: 'data/store.json'
+    });
   },
 
   // ── Admins ──────────────────────────────────────────────────────
@@ -422,7 +271,6 @@ module.exports = {
   },
 
   async addAdmin({ userid, password, name, role }) {
-    await fetchRemoteStore();
     const cleanUser = String(userid || '').trim();
     if (!cleanUser || !password) return { error: 'User ID and password required' };
     if (inMemoryAdmins.some(a => a.userid.toLowerCase() === cleanUser.toLowerCase())) {
@@ -436,12 +284,11 @@ module.exports = {
       created_at: new Date().toLocaleDateString('en-IN')
     };
     inMemoryAdmins.push(newAdmin);
-    await persistStore();
+    persistToFile();
     return { success: true, admin: { userid: newAdmin.userid, name: newAdmin.name, role: newAdmin.role } };
   },
 
   async deleteAdmin(userid) {
-    await fetchRemoteStore();
     const cleanUser = String(userid || '').trim().toLowerCase();
     if (cleanUser === PRIMARY_ADMIN.userid.toLowerCase()) {
       return { error: 'Cannot remove primary super admin' };
@@ -449,7 +296,7 @@ module.exports = {
     const before = inMemoryAdmins.length;
     inMemoryAdmins = inMemoryAdmins.filter(a => a.userid.toLowerCase() !== cleanUser);
     if (inMemoryAdmins.length === before) return { error: 'Admin not found' };
-    await persistStore();
+    persistToFile();
     return { success: true };
   },
 
@@ -461,7 +308,7 @@ module.exports = {
   async saveEvent(data) {
     const ev = { ...data, updated_at: new Date().toISOString() };
     inMemoryEvent = ev;
-    await persistStore();
+    persistToFile();
     return ev;
   },
 
@@ -485,7 +332,6 @@ module.exports = {
   },
 
   async addTeam(data) {
-    await fetchRemoteStore();
     const hackId = nextTeamId(inMemoryTeams);
     const team = {
       id:             hackId,
@@ -512,12 +358,11 @@ module.exports = {
     const newMembers = membersFromTeam(team);
     inMemoryMembers.push(...newMembers);
 
-    await persistStore();
+    persistToFile();
     return { team, members: newMembers };
   },
 
   async updateTeam(id, data) {
-    await fetchRemoteStore();
     const targetId = String(id).trim().toLowerCase();
     const idx = inMemoryTeams.findIndex(r => r.id && r.id.toLowerCase() === targetId);
     if (idx === -1) return null;
@@ -530,19 +375,18 @@ module.exports = {
     const newMembers   = membersFromTeam(inMemoryTeams[idx]);
     inMemoryMembers = [...otherMembers, ...newMembers];
 
-    await persistStore();
+    persistToFile();
     return inMemoryTeams[idx];
   },
 
   async deleteTeam(id) {
-    await fetchRemoteStore();
     const targetId = String(id).trim().toLowerCase();
     const after = inMemoryTeams.filter(r => r.id && r.id.toLowerCase() !== targetId);
     if (after.length === inMemoryTeams.length) return { deleted: 0 };
     inMemoryTeams = after;
     inMemoryMembers = inMemoryMembers.filter(m => m.team_id.toLowerCase() !== targetId);
 
-    await persistStore();
+    persistToFile();
     return { deleted: 1 };
   },
 
@@ -575,18 +419,16 @@ module.exports = {
   },
 
   async updateMember(id, data) {
-    await fetchRemoteStore();
     const cleanId = String(id).trim().toLowerCase();
     const idx = inMemoryMembers.findIndex(m => m.id && m.id.toLowerCase() === cleanId);
     if (idx === -1) return null;
     inMemoryMembers[idx] = { ...inMemoryMembers[idx], ...data, id: inMemoryMembers[idx].id };
 
-    await persistStore();
+    persistToFile();
     return inMemoryMembers[idx];
   },
 
   async addMember(data) {
-    await fetchRemoteStore();
     const tId = String(data.team_id || '').trim().toLowerCase();
     const teamMembers = inMemoryMembers.filter(m => m.team_id && m.team_id.toLowerCase() === tId);
     const nextNum = teamMembers.length + 1;
@@ -601,18 +443,40 @@ module.exports = {
       registered_at: data.registered_at || new Date().toLocaleString('en-IN'),
     };
     inMemoryMembers.push(m);
-    await persistStore();
+    persistToFile();
     return m;
   },
 
-  // ── Export all data ───────────────────────────────────────────────
+  // ── Import / Export all data ───────────────────────────────────────
   exportAll() {
     return {
       event:        inMemoryEvent,
+      teams:        inMemoryTeams,
       participants: inMemoryTeams,
       members:      inMemoryMembers,
       admins:       this.getAdmins(),
       exported_at:  new Date().toISOString(),
     };
   },
+
+  importAll(data) {
+    if (!data) return { error: 'No data provided' };
+    if (data.teams && Array.isArray(data.teams)) {
+      inMemoryTeams = data.teams;
+    } else if (data.participants && Array.isArray(data.participants)) {
+      inMemoryTeams = data.participants;
+    }
+    if (data.members && Array.isArray(data.members)) {
+      inMemoryMembers = data.members;
+    } else {
+      inMemoryMembers = inMemoryTeams.flatMap(membersFromTeam);
+    }
+    if (data.event) inMemoryEvent = data.event;
+    if (data.admins && Array.isArray(data.admins)) {
+      const hasPrimary = data.admins.some(a => a.userid === PRIMARY_ADMIN.userid);
+      inMemoryAdmins = hasPrimary ? data.admins : [PRIMARY_ADMIN, ...data.admins];
+    }
+    persistToFile();
+    return { success: true, count: inMemoryTeams.length };
+  }
 };

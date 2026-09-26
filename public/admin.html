@@ -113,12 +113,14 @@
     <span class="text-slate-500 text-xs ml-2 font-medium">CalmStacks 24-Hour Hackathon &bull; Dept. of CSE, MCE</span>
   </div>
   <div class="ml-auto flex items-center gap-3">
-    <div id="sync-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold" style="background:#f8fafc;border:1px solid #e2e8f0;color:#64748b" title="Checking GitHub cloud sync status...">
-      <span id="sync-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
-      <span id="sync-text">Checking Sync...</span>
+    <div id="file-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold" style="background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d" title="All edits saved directly to data/store.json & dataset.js">
+      <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+      <span>📁 File Store Active</span>
     </div>
     <span id="hdr-cnt" class="pill" style="background:#f0f9ff;color:#0284c7;border:1px solid #bae6fd">0 teams</span>
     <a href="/" class="btn btn-outline btn-sm">👁 Public Portal</a>
+    <button onclick="$('import-file').click()" class="btn btn-outline btn-sm">⬆ Import JSON</button>
+    <input type="file" id="import-file" accept=".json" class="hidden" onchange="handleImport(event)"/>
     <a href="/api/export" class="btn btn-outline btn-sm">⬇ Export JSON</a>
     <button onclick="handleLogout()" class="btn btn-danger btn-sm">🚪 Logout</button>
   </div>
@@ -145,15 +147,15 @@
       <span class="icon">👑</span> Admins
     </button>
     <div class="mt-auto pt-4 border-t border-slate-100">
-      <div id="sync-info-box" class="p-2.5 rounded-lg text-[0.72rem] bg-slate-50 border border-slate-200 mb-2">
+      <div class="p-2.5 rounded-lg text-[0.72rem] bg-slate-50 border border-slate-200 mb-2">
         <p class="font-bold text-slate-700 flex items-center gap-1.5">
-          <span id="sync-box-dot" class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-          <span>GitHub Cloud Storage</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span>File System Storage</span>
         </p>
-        <p id="sync-box-msg" class="text-slate-500 mt-1 leading-tight text-[0.68rem]">Checking token...</p>
+        <p class="text-slate-500 mt-1 leading-tight text-[0.68rem]">Saved in <code class="text-sky-600 font-mono font-bold">data/store.json</code></p>
       </div>
       <p class="text-slate-400 text-xs px-1 font-semibold">CalmStacks Database</p>
-      <p class="text-slate-500 text-xs px-1 mt-0.5 font-mono">data/store.json</p>
+      <p class="text-slate-500 text-xs px-1 mt-0.5 font-mono">data/participants.csv</p>
     </div>
   </aside>
 
@@ -1042,59 +1044,36 @@ const closeModal = () => {
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-// ── GitHub Cloud Sync Status ──────────────────────────────────────
-const loadSyncStatus = async () => {
+// ── JSON Import / Restore ─────────────────────────────────────────
+const handleImport = async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
   try {
-    const res = await fetch('/api/sync-status');
-    const data = await res.json();
-    const dot = $('sync-dot');
-    const text = $('sync-text');
-    const badge = $('sync-badge');
-    const boxDot = $('sync-box-dot');
-    const boxMsg = $('sync-box-msg');
-
-    if (data.status === 'connected') {
-      dot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
-      text.textContent = 'Cloud Synced';
-      badge.style.background = '#f0fdf4';
-      badge.style.borderColor = '#bbf7d0';
-      badge.style.color = '#15803d';
-      badge.title = `Auto-sync active with GitHub: ${data.repo}`;
-
-      boxDot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500';
-      boxMsg.textContent = '✓ Auto-saving to GitHub cloud';
-      boxMsg.className = 'text-emerald-700 mt-1 leading-tight text-[0.68rem] font-medium';
-    } else if (data.status === 'warning') {
-      dot.className = 'w-2 h-2 rounded-full bg-amber-500';
-      text.textContent = 'Sync Initializing';
-      badge.style.background = '#fffbeb';
-      badge.style.borderColor = '#fde68a';
-      badge.style.color = '#b45309';
-
-      boxDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-500';
-      boxMsg.textContent = 'Connecting repo...';
-      boxMsg.className = 'text-amber-700 mt-1 leading-tight text-[0.68rem] font-medium';
+    const text = await file.text();
+    const json = JSON.parse(text);
+    const res = await fetch('/api/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(json)
+    });
+    const result = await res.json();
+    if (res.ok && result.success) {
+      toast(`✓ Successfully imported ${result.count} teams!`);
+      loadCount();
+      loadEvent();
+      loadTable();
     } else {
-      dot.className = 'w-2 h-2 rounded-full bg-rose-500';
-      text.textContent = data.configured ? 'Sync Error' : 'Token Missing';
-      badge.style.background = '#fef2f2';
-      badge.style.borderColor = '#fecaca';
-      badge.style.color = '#b91c1c';
-      badge.title = data.message || 'GitHub token not configured';
-
-      boxDot.className = 'w-1.5 h-1.5 rounded-full bg-rose-500';
-      boxMsg.textContent = data.configured ? '⚠ ' + data.message : '⚠ GITHUB_TOKEN missing in Vercel';
-      boxMsg.className = 'text-rose-700 mt-1 leading-tight text-[0.68rem] font-medium';
+      toast(result.error || 'Failed to import JSON data', 'err');
     }
-  } catch (e) {
-    console.error('Error fetching sync status', e);
+  } catch (err) {
+    toast('Invalid JSON file format', 'err');
+  } finally {
+    e.target.value = '';
   }
 };
 
 loadEvent();
 loadCount();
-loadSyncStatus();
-setInterval(loadSyncStatus, 20000);
 
 // ── Add Member ────────────────────────────────────────────────────
 const loadTeamDropdown = async () => {

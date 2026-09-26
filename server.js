@@ -335,9 +335,14 @@ app.post('/api/members', requireAdmin, async (req, res) => {
 });
 
 app.get('/api/export', requireAdmin, async (req, res) => {
-  await db.sync();
   res.setHeader('Content-Disposition', `attachment; filename="hackathon-${Date.now()}.json"`);
   res.json(db.exportAll());
+});
+
+app.post('/api/import', requireAdmin, async (req, res) => {
+  const result = db.importAll(req.body);
+  if (result.error) return res.status(400).json(result);
+  res.json(result);
 });
 
 // ── Pages & Direct Public Views ────────────────────────────────────
