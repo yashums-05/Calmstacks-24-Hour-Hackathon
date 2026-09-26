@@ -1,117 +1,72 @@
-# Event Participant ID System
+# CalmStacks 24-Hour Hackathon 2026 — Django & SQLite ID System
 
-A deployable web app that registers event participants, generates a unique ID for each, and provides a shareable public profile URL — no QR codes, just a clean URL.
-
-## Stack
-- **Runtime**: Node.js 22.5+ (uses built-in `node:sqlite` — zero native compilation)
-- **Framework**: Express.js
-- **Database**: SQLite (via Node.js built-in `node:sqlite`, stored in `data/app.db`)
-- **Frontend**: Vanilla HTML/CSS/JS (served as static files)
+A Django web application with SQLite database for managing hackathon teams, participants, verified digital records, and password-protected profile access.
 
 ---
 
-## Getting Started (Local)
+## 🚀 Tech Stack
+- **Framework:** Python 3 + Django 5.x / 6.x
+- **Database:** SQLite (`db.sqlite3`)
+- **Frontend:** Vanilla HTML5, Tailwind CSS, JetBrains Mono
+- **Organized by:** Dept. of CSE, Malnad College of Engineering, Hassan
+
+---
+
+## 💻 Quick Start
 
 ```bash
-# 1. Install dependencies (only express!)
-npm install
+# 1. Install dependencies
+pip install -r requirements.txt
 
-# 2. Start the server
-npm start
+# 2. Run database migrations (if needed)
+python manage.py migrate
 
-# 3. Open the app
-# Admin dashboard: http://localhost:3000
-# API health:      http://localhost:3000/health
+# 3. Seed initial database (76 teams + 250 members)
+python seed_db.py
+
+# 4. Start the server
+python manage.py runserver
 ```
 
 ---
 
-## How It Works
+## 🌐 URLs & Access
 
-1. **Set up your event** → Go to ⚙ Event Setup, fill in event name, dates, venue, organizer
-2. **Add participants** → Go to ➕ Add Participant, fill in details, click **Generate ID & Register**
-3. **Share the URL** → Every participant gets a unique URL like:
-   ```
-   https://yourapp.com/p/a3f2c1d0-7b2e-4f1a-9c3e-b8d2e5f6a7c1
-   ```
-4. **Open the URL** → Shows the participant's full profile + event details (GET request, no login needed)
+- **Public Portal:** `http://127.0.0.1:8000/`
+- **Admin Dashboard:** `http://127.0.0.1:8000/admin-panel/`
+- **Django Admin:** `http://127.0.0.1:8000/django-admin/`
+- **Participant Access (e.g.):** `http://127.0.0.1:8000/m/HACK-001-M1`
 
 ---
 
-## API Endpoints
+## 🔑 Default Admin Credentials
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| `GET`  | `/`   | Admin dashboard |
-| `GET`  | `/p/:id` | **Public participant profile page** (shareable URL) |
-| `GET`  | `/api/event` | Get event config |
-| `POST` | `/api/event` | Save event config |
-| `GET`  | `/api/participants` | List all participants (`?search=` supported) |
-| `POST` | `/api/participants` | Register participant → returns `id` + `profile_url` |
-| `GET`  | `/api/participants/:id` | Get participant + event JSON |
-| `DELETE` | `/api/participants/:id` | Remove participant |
-| `GET`  | `/api/export` | Download all data as JSON |
-| `GET`  | `/health` | Health check |
+- **User ID:** `yashu`
+- **Password:** `Yashu@2005`
 
 ---
 
-## Deploy to Railway (Free)
-
-```bash
-# 1. Install Railway CLI
-npm install -g @railway/cli
-
-# 2. Login and init
-railway login
-railway init
-
-# 3. Deploy
-railway up
-
-# Your app will be live at https://yourapp.up.railway.app
-```
-
-## Deploy to Render (Free)
-
-1. Push code to GitHub
-2. Go to [render.com](https://render.com) → New Web Service
-3. Connect your repo
-4. Set:
-   - **Build Command**: `npm install`
-   - **Start Command**: `node server.js`
-5. Add Environment Variable: `DB_PATH=/data/app.db`
-6. Add a **Disk** (mount at `/data`) to persist the SQLite file
-
-## Deploy to Fly.io
-
-```bash
-fly launch
-fly deploy
-```
-
----
-
-## Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `3000` | HTTP port |
-| `DB_PATH` | `./data/app.db` | Path to SQLite database file |
-
----
-
-## Project Structure
+## 📁 Project Structure
 
 ```
-event-id-system/
-├── server.js          ← Express app + REST API
-├── db.js              ← SQLite database (node:sqlite built-in)
-├── package.json
-├── Procfile           ← Railway/Heroku
-├── railway.json       ← Railway config
-├── .env.example
-├── .gitignore
-└── public/
-    ├── index.html     ← Admin dashboard
-    └── profile.html   ← Public participant profile page
+.
+├── db.sqlite3               ← SQLite Database
+├── manage.py                ← Django CLI
+├── requirements.txt         ← Python dependencies
+├── seed_db.py               ← Database seeder script
+├── hackathon/               ← Core Django App (Models, Views, APIs)
+│   ├── models.py
+│   ├── views.py
+│   ├── urls.py
+│   └── admin.py
+├── hackathon_core/          ← Django Project Settings
+│   ├── settings.py
+│   └── urls.py
+├── templates/               ← HTML Templates
+│   ├── index.html
+│   ├── login.html
+│   ├── admin.html
+│   ├── member.html
+│   └── profile.html
+└── public/                  ← Static Assets
 ```
