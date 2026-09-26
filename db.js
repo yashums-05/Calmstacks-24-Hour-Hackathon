@@ -195,22 +195,33 @@ function initLocalStore() {
 
 initLocalStore();
 
+function getToken() {
+  return (process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '').trim();
+}
+
+function getRepo() {
+  return (process.env.GITHUB_REPO || 'yashums-05/Calmstacks-24-Hour-Hackathon').trim();
+}
+
 // ── GitHub API Sync ────────────────────────────────────────────────
 function githubRequest(endpoint, method = 'GET', body = null) {
-  if (!GITHUB_TOKEN) return Promise.resolve({ status: 500, error: 'No token configured' });
+  const token = getToken();
+  const repo  = getRepo();
+  if (!token) return Promise.resolve({ status: 400, error: 'GITHUB_TOKEN is not set in environment variables' });
   return new Promise((resolve) => {
     const payload = body ? JSON.stringify(body) : null;
     const req = https.request({
       hostname: 'api.github.com',
-      path: '/repos/' + GITHUB_REPO + endpoint,
+      path: '/repos/' + repo + endpoint,
       method,
       headers: {
         'User-Agent': 'CalmStacks-Hackathon-App',
-        'Authorization': 'Bearer ' + GITHUB_TOKEN,
+        'Authorization': 'Bearer ' + token,
         'Accept': 'application/vnd.github.v3+json',
+        'X-GitHub-Api-Version': '2022-11-28',
         ...(payload ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {})
       },
-      timeout: 8000
+      timeout: 9000
     }, res => {
       let data = '';
       res.on('data', chunk => data += chunk);
@@ -223,16 +234,17 @@ function githubRequest(endpoint, method = 'GET', body = null) {
       });
     });
     req.on('error', err => resolve({ status: 500, error: err.message }));
-    req.on('timeout', () => { req.destroy(); resolve({ status: 408, error: 'Timeout' }); });
+    req.on('timeout', () => { req.destroy(); resolve({ status: 408, error: 'GitHub API request timed out' }); });
     if (payload) req.write(payload);
     req.end();
   });
 }
 
 async function fetchRemoteStore(force = false) {
-  if (!GITHUB_TOKEN) return;
+  const token = getToken();
+  if (!token) return false;
   const now = Date.now();
-  if (!force && (now - lastFetchTime < 3000)) return; // 3s cache
+  if (!force && (now - lastFetchTime < 3000)) return true; // 3s cache
   lastFetchTime = now;
 
   try {
@@ -251,9 +263,13 @@ async function fetchRemoteStore(force = false) {
           inMemoryAdmins = hasPrimary ? parsed.admins : [PRIMARY_ADMIN, ...parsed.admins];
         }
         try { fs.writeFileSync(TMP_STORE_JSON, jsonStr, 'utf8'); } catch (e) {}
+        return true;
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error('[DB Remote Fetch] Error:', e.message);
+  }
+  return false;
 }
 
 async function persistStore() {
@@ -269,7 +285,11 @@ async function persistStore() {
   writeCSVFile(TEAMS_CSV, TEAM_COLS, inMemoryTeams, TMP_TEAMS_CSV);
   writeCSVFile(MEMBERS_CSV, MEMBER_COLS, inMemoryMembers, TMP_MEMBERS_CSV);
 
-  if (!GITHUB_TOKEN) return true;
+  const token = getToken();
+  if (!token) {
+    console.warn('[DB Persist] No GITHUB_TOKEN configured; data saved locally only.');
+    return false;
+  }
 
   // Sync to GitHub and wait for confirmation
   try {
@@ -284,14 +304,19 @@ async function persistStore() {
     const putBody = {
       message: 'Sync hackathon participant store [auto-save]',
       content: b64,
+      branch: 'main',
+      committer: { name: 'CalmStacks Bot', email: 'bot@calmstacks.dev' },
+      author: { name: 'CalmStacks Bot', email: 'bot@calmstacks.dev' },
       ...(lastSha ? { sha: lastSha } : {})
     };
 
-    const putRes = await githubRequest(REMOTE_PATH, 'PUT', putBody);
+    let putRes = await githubRequest(REMOTE_PATH, 'PUT', putBody);
     if (putRes.status === 200 || putRes.status === 201) {
       lastSha = putRes.data?.content?.sha || putRes.data?.commit?.sha || null;
+      console.log('[DB Persist] Successfully persisted to GitHub repository!');
       return true;
-    } else if (putRes.status === 409) {
+    } else if (putRes.status === 409 || putRes.status === 422) {
+      // Conflict or mismatched sha: fetch fresh sha and retry once
       const getRes = await githubRequest(REMOTE_PATH);
       if (getRes.status === 200 && getRes.data?.sha) {
         lastSha = getRes.data.sha;
@@ -299,11 +324,15 @@ async function persistStore() {
         const retryRes = await githubRequest(REMOTE_PATH, 'PUT', putBody);
         if (retryRes.status === 200 || retryRes.status === 201) {
           lastSha = retryRes.data?.content?.sha || retryRes.data?.commit?.sha || null;
+          console.log('[DB Persist] Successfully persisted to GitHub on retry!');
           return true;
         }
       }
     }
-  } catch (e) {}
+    console.error('[DB Persist] GitHub API Error:', putRes.status, putRes.data || putRes.error);
+  } catch (e) {
+    console.error('[DB Persist] Exception while saving to GitHub:', e.message);
+  }
   return false;
 }
 
@@ -313,10 +342,63 @@ fetchRemoteStore(true).catch(() => {});
 // ── Exported API ───────────────────────────────────────────────────
 module.exports = {
 
-  // ── Sync Helper ─────────────────────────────────────────────────
+  // ── Sync Helper & Diagnostics ───────────────────────────────────
   async sync(force = false) {
     await fetchRemoteStore(force);
     return true;
+  },
+
+  async getSyncStatus() {
+    const token = getToken();
+    const repo  = getRepo();
+    if (!token) {
+      return {
+        configured: false,
+        status: 'error',
+        message: 'GITHUB_TOKEN environment variable is not set in Vercel.',
+        repo
+      };
+    }
+    try {
+      const res = await githubRequest(REMOTE_PATH);
+      if (res.status === 200) {
+        return {
+          configured: true,
+          status: 'connected',
+          message: 'Connected & auto-syncing with GitHub repo',
+          repo,
+          lastSha: res.data?.sha || lastSha
+        };
+      } else if (res.status === 401 || res.status === 403) {
+        return {
+          configured: true,
+          status: 'error',
+          message: `GitHub authentication failed (${res.status}): ${res.data?.message || 'Check token permissions (Contents: Read & Write)'}`,
+          repo
+        };
+      } else if (res.status === 404) {
+        return {
+          configured: true,
+          status: 'warning',
+          message: `Repository or path not found: ${repo}${REMOTE_PATH}`,
+          repo
+        };
+      } else {
+        return {
+          configured: true,
+          status: 'error',
+          message: `GitHub API response (${res.status}): ${res.data?.message || res.error || 'Unknown error'}`,
+          repo
+        };
+      }
+    } catch (e) {
+      return {
+        configured: true,
+        status: 'error',
+        message: `Network error connecting to GitHub: ${e.message}`,
+        repo
+      };
+    }
   },
 
   // ── Admins ──────────────────────────────────────────────────────

@@ -164,6 +164,11 @@ app.delete('/api/admins/:userid', requireAdmin, async (req, res) => {
 
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
+app.get('/api/sync-status', async (req, res) => {
+  const status = await db.getSyncStatus();
+  res.json(status);
+});
+
 // ── Participant Member Specific Unlock & View ──────────────────────
 // Password verification: user must submit their registered name as password
 app.post('/api/members/:id/unlock', async (req, res) => {
