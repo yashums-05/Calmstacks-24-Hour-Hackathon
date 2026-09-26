@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Participant — CalmStacks 24-Hour Hackathon 2026</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #f8fafc;
+  color: #1e293b;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Subtle background grid */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(15,23,42,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15,23,42,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Top Accent Bar */
+.accent-bar {
+  height: 3px;
+  background: linear-gradient(90deg, #0284c7, #6366f1, #a855f7, #0284c7);
+  background-size: 300% 100%;
+  animation: shimmer 4s linear infinite;
+  position: relative; z-index: 20;
+}
+@keyframes shimmer { to { background-position: -300% 0; } }
+
+/* Site Header */
+.site-header {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.85rem 1.5rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+}
+.brand { display: flex; align-items: center; gap: .65rem; text-decoration: none; }
+.brand-dot {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: #0f172a;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: .75rem; font-weight: 800;
+  color: #fff; flex-shrink: 0;
+}
+.brand-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .75rem; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase; color: #0f172a;
+}
+.header-right { display: flex; gap: .5rem; align-items: center; }
+.hbtn {
+  font-family: 'JetBrains Mono', monospace; font-size: .65rem; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  padding: .4rem .9rem; border-radius: 999px; cursor: pointer; transition: all .15s;
+  border: 1px solid #cbd5e1;
+  background: #ffffff; color: #475569;
+  text-decoration: none; display: inline-block;
+}
+.hbtn:hover { border-color: #0f172a; color: #0f172a; background: #f1f5f9; }
+
+/* Page wrapper */
+.wrapper {
+  position: relative; z-index: 1;
+  max-width: 660px; margin: 0 auto;
+  padding: 2rem 1.25rem 5rem;
+}
+
+/* Sections */
+.section { margin-bottom: 1.75rem; }
+.section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .65rem; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: #64748b; margin-bottom: 0.85rem;
+  display: flex; align-items: center; gap: .6rem;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
+
+/* ── DARK IDENTITY CARD (NAME & USN) ── */
+.dark-identity-card {
+  background: linear-gradient(135deg, #090d16 0%, #0f172a 100%);
+  border: 1px solid #1e293b;
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  box-shadow: 0 12px 32px -4px rgba(15, 23, 42, 0.25), 0 4px 12px rgba(15, 23, 42, 0.15);
+  display: flex; align-items: center; gap: 1.25rem;
+  color: #ffffff;
+  position: relative; overflow: hidden;
+  margin-bottom: 1.75rem;
+}
+.dark-identity-card::after {
+  content: '';
+  position: absolute; right: -20px; bottom: -20px;
+  width: 140px; height: 140px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.dark-av {
+  width: 64px; height: 64px; border-radius: 1rem; flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.4rem; font-weight: 800;
+  color: #38bdf8;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.dark-identity-text { flex: 1; min-width: 0; }
+.dark-identity-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .62rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .12em;
+  color: #38bdf8; margin-bottom: .25rem;
+  display: flex; align-items: center; gap: .4rem;
+}
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8; display: inline-block;
+}
+.dark-identity-name {
+  font-size: 1.6rem; font-weight: 900;
+  letter-spacing: -.02em; color: #ffffff; line-height: 1.2;
+  margin-bottom: .45rem; word-break: break-word;
+}
+.dark-identity-usn {
+  display: inline-flex; align-items: center; gap: .4rem;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: .3rem .75rem; border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .8rem; font-weight: 700;
+  color: #7dd3fc; letter-spacing: .05em;
+}
+
+/* Light Card Shell */
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+/* ID & URL Cards */
+.id-card {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: .85rem;
+  padding: 1.1rem 1.35rem;
+  margin-bottom: .75rem;
+  cursor: pointer; transition: all .15s;
+}
+.id-card:hover { border-color: #0284c7; transform: translateY(-1px); }
+.id-card-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .62rem; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: #0369a1; margin-bottom: .35rem;
+}
+.id-card-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .9rem; font-weight: 700; color: #0284c7;
+  word-break: break-all;
+}
+
+.url-card {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: .85rem;
+  padding: 1.1rem 1.35rem;
+  cursor: pointer; transition: all .15s;
+}
+.url-card:hover { border-color: #16a34a; transform: translateY(-1px); }
+.url-card .id-card-label { color: #15803d; }
+.url-card .id-card-value { color: #16a34a; }
+
+/* Event Hero */
+.event-hero {
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1.75rem;
+  background: #ffffff;
+  margin-bottom: 1.5rem;
+  position: relative; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.ev-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .62rem; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: #0284c7; margin-bottom: .4rem;
+}
+.ev-big-title {
+  font-size: 1.3rem; font-weight: 800;
+  color: #0f172a; letter-spacing: -.02em;
+  margin-bottom: 1rem; line-height: 1.3;
+}
+.ev-chips { display: flex; flex-wrap: wrap; gap: .45rem; }
+.ec {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .65rem; font-weight: 700;
+  padding: .35rem .75rem; border-radius: .5rem;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc; color: #475569;
+}
+.ec-blue { background: #f0f9ff; border-color: #bae6fd; color: #0284c7; }
+.ec-gold { background: #fefce8; border-color: #fef08a; color: #ca8a04; font-weight: 800; }
+
+/* Event Grid */
+.ev-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: .65rem;
+  margin-bottom: 1.5rem;
+}
+.ev-block {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: .85rem;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+.ev-block.span2 { grid-column: span 2; }
+.ev-block-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .6rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: #64748b; margin-bottom: .25rem;
+}
+.ev-block-val { font-size: .92rem; font-weight: 700; color: #0f172a; }
+.ev-block-val.blue  { color: #0284c7; }
+.ev-block-val.green { color: #16a34a; }
+.ev-block-val.gold  { color: #ca8a04; }
+
+/* Collaborators */
+.collabs { display: flex; flex-wrap: wrap; gap: .5rem; }
+.collab {
+  display: inline-flex; align-items: center; gap: .5rem;
+  background: #ffffff; border: 1px solid #e2e8f0;
+  border-radius: .65rem; padding: .55rem .95rem;
+  font-size: .8rem; font-weight: 600; color: #334155;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+.cdot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* Cert Note */
+.cert-bar {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: .85rem;
+  padding: 1.1rem 1.25rem;
+  display: flex; gap: .85rem; align-items: flex-start;
+}
+.cert-icon { font-size: 1.35rem; line-height: 1; }
+.cert-text { font-size: .82rem; color: #166534; line-height: 1.5; }
+.cert-text a { color: #15803d; font-weight: 700; text-decoration: underline; }
+
+/* Password Gate Overlay */
+.gate-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.5rem;
+}
+.gate-overlay.hidden { display: none; }
+.gate-box {
+  width: 100%; max-width: 420px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.5rem;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
+}
+.gate-logo {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: #0f172a;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; color: #fff;
+  margin: 0 auto 1.25rem;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+.gate-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .65rem; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: #0284c7; margin-bottom: .4rem;
+}
+.gate-title {
+  font-size: 1.4rem; font-weight: 800;
+  letter-spacing: -.02em; color: #0f172a;
+  margin-bottom: .4rem;
+}
+.gate-sub {
+  font-size: .85rem; color: #64748b; margin-bottom: 1.75rem; line-height: 1.5;
+}
+.gate-input-wrap {
+  display: flex; flex-direction: column; gap: .75rem;
+}
+.gate-input {
+  width: 100%;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: .85rem;
+  padding: .85rem 1rem;
+  font-size: .95rem; font-weight: 600;
+  color: #0f172a; outline: none;
+  font-family: 'Inter', sans-serif;
+  text-align: center;
+  transition: all .15s;
+}
+.gate-input:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+  background: #ffffff;
+}
+.gate-input.shake {
+  animation: shake .35s ease;
+  border-color: #ef4444;
+}
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-8px)}
+  40%{transform:translateX(8px)}
+  60%{transform:translateX(-5px)}
+  80%{transform:translateX(5px)}
+}
+.gate-btn {
+  width: 100%;
+  background: #0f172a; color: #ffffff;
+  border: none; border-radius: .85rem;
+  padding: .9rem 1rem;
+  font-family: 'Inter', sans-serif;
+  font-size: .875rem; font-weight: 700;
+  cursor: pointer; transition: all .15s;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+.gate-btn:hover { background: #1e293b; transform: translateY(-1px); }
+.gate-btn:active { transform: scale(.98); }
+.gate-err {
+  margin-top: .9rem; font-size: .8rem; font-weight: 600;
+  color: #ef4444; font-family: 'JetBrains Mono', monospace;
+}
+
+/* Toast */
+.toast-wrap {
+  position: fixed; bottom: 1.5rem; right: 1.5rem;
+  z-index: 999; pointer-events: none;
+  display: flex; flex-direction: column; gap: .4rem;
+}
+.toast {
+  background: #0f172a; border: 1px solid #334155; color: #38bdf8;
+  border-radius: .6rem; padding: .6rem 1rem;
+  font-family: 'JetBrains Mono', monospace; font-size: .75rem; font-weight: 700;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.pg-footer {
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .65rem; color: #94a3b8;
+  letter-spacing: .06em; text-transform: uppercase;
+  padding-top: 2rem;
+}
+
+@media print {
+  body::before,.accent-bar,.site-header,.no-print,.toast-wrap { display:none!important; }
+  body { background:#fff; color:#000; }
+  .dark-identity-card { background:#000!important; color:#fff!important; }
+}
+</style>
+</head>
+<body>
+
+<div class="accent-bar"></div>
+
+<!-- HEADER -->
+<header class="site-header no-print">
+  <a class="brand" href="/" target="_self">
+    <div class="brand-dot">CS</div>
+    <span class="brand-text">CalmStacks</span>
+  </a>
+  <div class="header-right">
+    <button onclick="window.print()" class="hbtn no-print">🖨 Print</button>
+    <a href="/" class="hbtn">← Home</a>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="wrapper">
+
+<!-- PASSWORD GATE -->
+<div id="gate" class="gate-overlay">
+  <div class="gate-box">
+    <div class="gate-logo">🔒</div>
+    <div class="gate-eyebrow mono">Password Protected</div>
+    <h2 class="gate-title">Member View</h2>
+    <p class="gate-sub">Enter the member's <strong>full name</strong> as password to unlock and view this profile.</p>
+    <div class="gate-input-wrap">
+      <input id="gate-input" class="gate-input" type="text"
+        placeholder="Enter member's name as password…" autocomplete="off" spellcheck="false"
+        onkeydown="if(event.key==='Enter')tryUnlock()" autofocus />
+      <button class="gate-btn" onclick="tryUnlock()">Unlock Profile →</button>
+    </div>
+    <p id="gate-err" class="gate-err hidden"></p>
+  </div>
+</div>
+
+<!-- Profile Container -->
+<div id="profile" class="hidden">
+
+  <!-- ════ DARK IDENTITY CARD (NAME & USN) ════ -->
+  <div class="dark-identity-card">
+    <div class="dark-av" id="av"></div>
+    <div class="dark-identity-text">
+      <div class="dark-identity-eyebrow">
+        <span class="live-dot"></span>
+        Verified Participant
+      </div>
+      <h1 class="dark-identity-name" id="member-name"></h1>
+      <div class="dark-identity-usn" id="member-usn"></div>
+    </div>
+  </div>
+
+  <!-- PARTICIPANT ID & PROFILE URL -->
+  <div class="section">
+    <div class="section-label">Participant Identity</div>
+    <div class="id-card" id="uid-card" onclick="copyId()" title="Click to copy">
+      <div class="id-card-label">Unique Participant ID</div>
+      <div class="id-card-value" id="uid"></div>
+    </div>
+    <div class="url-card" onclick="copyUrl()" title="Click to copy">
+      <div class="id-card-label">Individual Profile URL</div>
+      <div class="id-card-value" id="member-url"></div>
+    </div>
+  </div>
+
+  <!-- EVENT HERO -->
+  <div class="section">
+    <div class="section-label">Event</div>
+    <div class="event-hero">
+      <div class="ev-eyebrow">Organized by Dept. of CSE, MCE Hassan // In collaboration with CalmStacks</div>
+      <div class="ev-big-title">CalmStacks 24-Hour Hackathon 2026</div>
+      <div class="ev-chips">
+        <span class="ec ec-blue">📅 25–26 Sep 2026</span>
+        <span class="ec ec-blue">⏰ 11:30 AM IST</span>
+        <span class="ec">📍 MCE, Hassan</span>
+        <span class="ec ec-gold">🏆 ₹50,000 Pool</span>
+        <span class="ec">⚡ 24 Hours Offline</span>
+      </div>
+    </div>
+
+    <!-- Event info blocks -->
+    <div class="ev-grid">
+      <div class="ev-block">
+        <div class="ev-block-label">Organized By</div>
+        <div class="ev-block-val blue">Dept. of CSE & CalmStacks</div>
+      </div>
+      <div class="ev-block">
+        <div class="ev-block-label">Series</div>
+        <div class="ev-block-val">CSE Student Dev Series</div>
+      </div>
+      <div class="ev-block">
+        <div class="ev-block-label">Date</div>
+        <div class="ev-block-val blue">25–26 Sep 2026</div>
+      </div>
+      <div class="ev-block">
+        <div class="ev-block-label">Kickoff Time</div>
+        <div class="ev-block-val">11:30 AM IST</div>
+      </div>
+      <div class="ev-block">
+        <div class="ev-block-label">Duration</div>
+        <div class="ev-block-val">24 Consecutive Hours</div>
+      </div>
+      <div class="ev-block">
+        <div class="ev-block-label">Format</div>
+        <div class="ev-block-val">Offline Sprint</div>
+      </div>
+      <div class="ev-block span2">
+        <div class="ev-block-label">Venue</div>
+        <div class="ev-block-val green">Malnad College of Engineering, Hassan</div>
+      </div>
+      <div class="ev-block">
+        <div class="ev-block-label">Prize Pool</div>
+        <div class="ev-block-val gold">₹50,000</div>
+      </div>
+      <div class="ev-block">
+        <div class="ev-block-label">Internships</div>
+        <div class="ev-block-val">4 Paid + More</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLLABORATORS -->
+  <div class="section">
+    <div class="section-label">Organizers & Collaborators</div>
+    <div class="collabs">
+      <div class="collab"><span class="cdot" style="background:#0284c7"></span>MCE Dept. of CSE (Organizer)</div>
+      <div class="collab"><span class="cdot" style="background:#16a34a"></span>CalmStacks</div>
+      <div class="collab"><span class="cdot" style="background:#8b5cf6"></span>Agamya Cyber Tech</div>
+    </div>
+  </div>
+
+  <!-- CERT NOTE -->
+  <div class="cert-bar no-print" style="margin-bottom:2rem;">
+    <span class="cert-icon">🏅</span>
+    <p class="cert-text">
+      This is your <strong>official digital participant record</strong> for CalmStacks 24-Hour Hackathon 2026, organized by the <strong>Dept. of CSE, Malnad College of Engineering, Hassan</strong>.
+      Share this URL when requested by organizers. More at
+      <a href="https://www.calmstacks.co.in/hackathon" target="_blank">calmstacks.co.in/hackathon</a>
+    </p>
+  </div>
+
+  <div class="pg-footer">
+    CalmStacks 24-Hour Hackathon 2026 &bull; Organized by Dept. of CSE, Malnad College of Engineering, Hassan &nbsp;·&nbsp;
+    <a href="https://www.calmstacks.co.in/hackathon" target="_blank" style="color:#0284c7;text-decoration:none;">calmstacks.co.in/hackathon</a>
+  </div>
+
+</div><!-- /profile -->
+</main>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+/* helpers */
+const clean = s => {
+  const v = String(s||'').trim();
+  if (!v || v.startsWith('#') || v === 'undefined' || v === 'null') return '';
+  return v;
+};
+const esc = s => clean(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const initials = n => n.trim().split(/\s+/).map(w=>w[0]||'').join('').toUpperCase().slice(0,2)||'?';
+
+const toast = msg => {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(()=>t.remove(), 1800);
+};
+const cp = (text, lbl) =>
+  navigator.clipboard.writeText(text).then(()=>toast('✓ '+(lbl||'Copied')));
+
+const copyId  = () => cp(document.getElementById('uid').textContent, 'ID copied');
+const copyUrl = () => cp(document.getElementById('member-url').textContent, 'URL copied');
+
+const memberId = location.pathname.split('/').filter(Boolean).pop().trim();
+const sessionKey = 'unlocked_' + memberId;
+
+const renderProfile = ({ member: m }) => {
+  document.title = `${m.name} — CalmStacks 24-Hour Hackathon 2026`;
+
+  /* avatar */
+  const avEl = document.getElementById('av');
+  avEl.textContent = initials(m.name);
+
+  /* Dark identity fields */
+  document.getElementById('member-name').textContent = m.name;
+  const usnClean = clean(m.usn);
+  const usnEl = document.getElementById('member-usn');
+  if (usnClean) {
+    usnEl.textContent = 'USN: ' + usnClean;
+    usnEl.classList.remove('hidden');
+  } else {
+    usnEl.classList.add('hidden');
+  }
+
+  /* IDs */
+  document.getElementById('uid').textContent        = m.id;
+  document.getElementById('member-url').textContent = m.profile_url || window.location.href;
+
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('profile').classList.remove('hidden');
+};
+
+const tryUnlock = async () => {
+  const input = document.getElementById('gate-input');
+  const err   = document.getElementById('gate-err');
+  const btn   = document.querySelector('.gate-btn');
+  const typed = input.value.trim();
+
+  if (!typed) {
+    err.textContent = 'Please enter your full name.';
+    err.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+
+  try {
+    const res = await fetch(`/api/members/${memberId}/unlock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: typed })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      sessionStorage.setItem(sessionKey, JSON.stringify(data));
+      err.classList.add('hidden');
+      renderProfile(data);
+    } else {
+      err.textContent = '✗ Incorrect name. Please enter your full registered name.';
+      err.classList.remove('hidden');
+      input.classList.remove('shake');
+      void input.offsetWidth;
+      input.classList.add('shake');
+      input.select();
+    }
+  } catch (e) {
+    err.textContent = 'Verification error. Please try again.';
+    err.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Unlock Profile →';
+  }
+};
+
+// Check if already unlocked in this session
+const cached = sessionStorage.getItem(sessionKey);
+if (cached) {
+  try {
+    const data = JSON.parse(cached);
+    if (data && data.member) renderProfile(data);
+  } catch (e) {
+    sessionStorage.removeItem(sessionKey);
+  }
+}
+</script>
+</body>
+</html>

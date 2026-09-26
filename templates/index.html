@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CalmStacks 24-Hour Hackathon 2026 — Admin Portal</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+    min-height: 100vh;
+  }
+  .card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  }
+  .btn-primary {
+    background: #0f172a;
+    color: #ffffff;
+    font-weight: 700;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
+  }
+  .btn-primary:hover {
+    background: #1e293b;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.25);
+  }
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+</style>
+</head>
+<body class="flex flex-col min-h-screen justify-between bg-slate-50">
+
+<!-- TOP BAR -->
+<header class="px-6 py-4 flex items-center justify-between bg-white border-b border-slate-200 shadow-sm">
+  <div class="flex items-center gap-3">
+    <div class="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white font-black text-xs shadow-sm">
+      CS
+    </div>
+    <div>
+      <span class="font-black text-sm text-slate-900 block leading-none">CalmStacks</span>
+      <span class="text-[0.68rem] text-slate-500 font-mono font-semibold">24-Hour Hackathon 2026</span>
+    </div>
+  </div>
+  
+  <div>
+    <a href="/login" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 text-xs font-bold transition-all shadow-sm">
+      <span>🔐 Admin Login</span>
+    </a>
+  </div>
+</header>
+
+<!-- MAIN HERO -->
+<main class="flex-1 flex items-center justify-center p-6">
+  <div class="w-full max-w-md">
+    
+    <div class="card p-8 text-center space-y-6">
+      <!-- Icon / Badge -->
+      <div class="w-16 h-16 rounded-2xl bg-slate-900 mx-auto flex items-center justify-center text-white font-black text-2xl shadow-xl">
+        CS
+      </div>
+
+      <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-slate-200 bg-slate-100 text-slate-700 text-[0.7rem] font-mono font-bold mb-3">
+          <span>🔒 Organizer & Admin Portal</span>
+        </div>
+        <h1 class="text-2xl font-black text-slate-900 tracking-tight">
+          CalmStacks 24-Hour Hackathon
+        </h1>
+        <p class="text-sky-700 font-bold text-xs mt-1.5 font-mono">
+          Organized by Dept. of CSE, MCE Hassan
+        </p>
+        <p class="text-slate-500 text-xs mt-2 leading-relaxed font-medium">
+          Official management and certificate verification system. Authorized organizers please sign in below.
+        </p>
+      </div>
+
+      <!-- Single Admin Login Action -->
+      <div class="pt-2">
+        <a href="/login" class="btn-primary w-full py-3.5 rounded-xl text-sm flex items-center justify-center gap-2 block">
+          <span>🔐 Admin Sign In →</span>
+        </a>
+      </div>
+
+      <div class="pt-4 border-t border-slate-100 text-center">
+        <p class="text-[0.72rem] text-slate-400 font-medium">
+          Participants access their individual verified certificate directly via their unique URL and name passkey.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="py-5 text-center text-xs text-slate-500 border-t border-slate-200 font-medium bg-white">
+  <p>CalmStacks 24-Hour Hackathon 2026 &bull; Organized by Dept. of CSE, Malnad College of Engineering, Hassan</p>
+</footer>
+
+</body>
+</html>

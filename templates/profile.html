@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Team Profile</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+    min-height: 100vh;
+  }
+  .card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+  .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .68rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .08em; color: #64748b;
+  }
+  .val { font-size: .95rem; color: #0f172a; font-weight: 600; margin-top: .15rem; }
+  .pill {
+    display: inline-flex; align-items: center; padding: 3px 12px;
+    border-radius: 999px; font-size: .75rem; font-weight: 700;
+  }
+  .id-box {
+    font-family: 'JetBrains Mono', monospace; background: #f0f9ff;
+    border: 1px solid #bae6fd; border-radius: .6rem; padding: .75rem 1rem;
+    color: #0284c7; font-size: .85rem; font-weight: 700; word-break: break-all;
+  }
+
+  /* ── DARK IDENTITY STYLING FOR TEAM & LEAD ── */
+  .dark-team-card {
+    background: linear-gradient(135deg, #090d16 0%, #0f172a 100%);
+    border: 1px solid #1e293b;
+    border-radius: 1.25rem;
+    padding: 1.75rem;
+    color: #ffffff;
+    box-shadow: 0 12px 32px -4px rgba(15, 23, 42, 0.25);
+  }
+  .dark-member-card {
+    display: flex; align-items: center; gap: .85rem;
+    background: #0f172a; border: 1px solid #1e293b;
+    border-radius: .85rem; padding: .85rem 1.1rem;
+    color: #ffffff; text-decoration: none; transition: all .15s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  .dark-member-card:hover {
+    border-color: #38bdf8;
+    transform: translateX(4px);
+    box-shadow: 0 6px 16px rgba(56, 189, 248, 0.15);
+  }
+  .dark-usn-pill {
+    font-family: 'JetBrains Mono', monospace; font-size: .75rem; font-weight: 700;
+    background: rgba(56, 189, 248, 0.12); color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    padding: 2px 8px; border-radius: 6px; display: inline-block;
+  }
+
+  .shake { animation: shake .35s ease; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-8px)}
+    40%{transform:translateX(8px)}
+    60%{transform:translateX(-5px)}
+    80%{transform:translateX(5px)}
+  }
+</style>
+</head>
+<body>
+<div style="background:linear-gradient(90deg,#0284c7,#6366f1,#a855f7,#0284c7);height:3px"></div>
+
+<!-- PASSWORD GATE -->
+<div id="gate" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+  <div class="card w-full max-w-md p-8 text-center shadow-2xl border border-slate-200">
+    <div class="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center mx-auto mb-4 text-2xl text-white shadow-lg">
+      🔒
+    </div>
+    <span class="text-[0.65rem] font-bold text-sky-600 uppercase tracking-widest block mb-1">Protected Team Profile</span>
+    <h2 class="text-xl font-extrabold text-slate-900 mb-2">Team Verification</h2>
+    <p class="text-slate-500 text-xs mb-6">Enter the <strong>Team Lead or Member name</strong> as password to unlock this profile.</p>
+    
+    <div class="space-y-3">
+      <input id="gate-input" type="text" placeholder="Enter Lead / Member name..."
+        class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-sm text-center text-slate-900 font-semibold outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
+        onkeydown="if(event.key==='Enter')tryUnlockTeam()" autofocus />
+      
+      <button onclick="tryUnlockTeam()" id="gate-btn"
+        class="w-full py-3 rounded-xl font-bold text-sm text-white bg-slate-900 hover:bg-slate-800 transition-all shadow-md">
+        Unlock Profile →
+      </button>
+    </div>
+    <p id="gate-err" class="text-red-500 font-semibold text-xs mt-3 hidden"></p>
+  </div>
+</div>
+
+<div class="max-w-xl mx-auto px-4 py-8">
+  <div id="error-state" class="hidden text-center py-20">
+    <div class="text-5xl mb-3">🔍</div>
+    <h2 class="text-xl font-bold text-slate-900 mb-2">Team Not Found</h2>
+    <p class="text-slate-500 text-sm mb-5">This team ID does not exist.</p>
+    <a href="/login" class="inline-block px-5 py-2.5 rounded-xl font-semibold text-sm text-white bg-slate-900">Sign In</a>
+  </div>
+
+  <div id="profile" class="hidden space-y-5">
+    
+    <!-- ════ DARK TEAM IDENTITY CARD ════ -->
+    <div class="dark-team-card">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <span class="text-[0.65rem] font-mono font-bold text-sky-400 uppercase tracking-widest block mb-1">Hackathon Team</span>
+          <h1 id="team-name" class="text-2xl font-black text-white"></h1>
+          
+          <div class="mt-2.5 flex items-center gap-2">
+            <span class="text-xs text-slate-300 font-medium">Lead:</span>
+            <span id="lead-name" class="text-sm font-bold text-sky-300"></span>
+          </div>
+
+          <div id="pills" class="flex flex-wrap gap-1.5 mt-3"></div>
+        </div>
+
+        <div class="flex flex-col gap-2 shrink-0">
+          <button onclick="window.print()"
+            class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 text-slate-300 hover:text-white">🖨 Print</button>
+          <a href="/" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 text-slate-300 hover:text-white text-center">← Home</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team unique ID -->
+    <div class="card p-5">
+      <div class="flex items-center justify-between mb-2">
+        <p class="lbl">Unique Team ID</p>
+        <button id="copy-btn" onclick="copyId()"
+          class="text-xs px-3 py-1 rounded-lg border border-slate-300 text-slate-600 hover:border-sky-500 hover:text-sky-600 transition-colors">📋 Copy ID</button>
+      </div>
+      <div id="uid" class="id-box"></div>
+    </div>
+
+    <!-- Members (Dark Identities) -->
+    <div class="card p-5">
+      <p class="lbl mb-3">Team Members — Individual Identities</p>
+      <div id="members" class="space-y-2.5"></div>
+    </div>
+
+    <!-- Registration details -->
+    <div class="card p-5">
+      <p class="lbl mb-3">Registration Details</p>
+      <div id="det" class="grid grid-cols-2 gap-4"></div>
+    </div>
+
+    <!-- Event -->
+    <div class="card p-5">
+      <p class="lbl mb-3">Event Details</p>
+      <div id="ev-det" class="grid grid-cols-2 gap-4"></div>
+    </div>
+
+    <p class="text-center text-slate-500 text-xs pb-4 font-medium">
+      CalmStacks 24-Hour Hackathon 2026 &bull; Organized by Dept. of CSE, Malnad College of Engineering, Hassan
+    </p>
+  </div>
+</div>
+
+<script>
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmtDate = d => d ? new Date(d+'T00:00:00').toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'}) : '';
+const initials = n => n.trim().split(/\s+/).map(w=>w[0]||'').join('').toUpperCase().slice(0,2)||'?';
+const row = (l,v) => v ? `<div><p class="lbl">${l}</p><p class="val">${esc(v)}</p></div>` : '';
+
+const copyId = () => {
+  navigator.clipboard.writeText(document.getElementById('uid').textContent).then(() => {
+    const btn=document.getElementById('copy-btn');
+    btn.textContent='✓ Copied!'; btn.style.color='#16a34a'; btn.style.borderColor='#16a34a';
+    setTimeout(()=>{btn.textContent='📋 Copy ID';btn.style.color='';btn.style.borderColor='';},1800);
+  });
+};
+
+const id = location.pathname.split('/').filter(Boolean).pop().trim();
+const teamSessionKey = 'unlocked_team_' + id;
+
+const renderTeam = ({ participant: p, members, event: ev }) => {
+  document.title = `${p.team_name} — Team Profile`;
+
+  document.getElementById('team-name').textContent = p.team_name;
+  document.getElementById('lead-name').textContent = p.lead_name;
+
+  const paid = p.payment_status;
+  document.getElementById('pills').innerHTML = [
+    paid==='PAID'   ? '<span class="pill bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">✓ PAID</span>' : '',
+    paid==='PENDING'? '<span class="pill bg-rose-500/20 text-rose-300 border border-rose-500/30">⏳ PENDING</span>' : '',
+    p.amount ? `<span class="pill bg-sky-500/20 text-sky-300 border border-sky-500/30">${esc(p.amount)}</span>` : '',
+    p.team_size ? `<span class="pill bg-slate-800 text-slate-300">${esc(p.team_size.replace(/\s*\(.*?\)/,''))}</span>` : '',
+  ].join('');
+
+  document.getElementById('uid').textContent = p.id;
+
+  document.getElementById('members').innerHTML = members.map(m => {
+    return `
+      <a href="/participants/${m.id}" class="dark-member-card">
+        <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-sky-400 shrink-0 font-mono text-sm">${initials(m.name)}</div>
+        <div class="flex-1 min-w-0">
+          <p class="text-white font-bold text-sm leading-snug">${esc(m.name)}</p>
+          ${m.usn ? `<span class="dark-usn-pill mt-1">USN: ${esc(m.usn)}</span>` : ''}
+        </div>
+        <div class="flex flex-col items-end gap-1 shrink-0">
+          <span class="text-xs font-mono text-sky-400 font-semibold">${esc(m.role)}</span>
+          <span class="text-[0.7rem] text-slate-400 font-mono">${m.id} →</span>
+        </div>
+      </a>`;
+  }).join('');
+
+  document.getElementById('det').innerHTML = [
+    row('Email', p.email),
+    row('Phone', p.phone),
+    row('Year & Sem', p.year),
+    row('UTR / Transaction ID', p.utr),
+    row('Registered', p.registered_at),
+  ].join('');
+
+  document.getElementById('ev-det').innerHTML = [
+    row('Event Name', ev.name),
+    row('Type', ev.type),
+    row('Edition', ev.edition),
+    row('Venue', ev.venue),
+    row('Organizer', ev.organizer),
+    row('Start Date', fmtDate(ev.start_date)),
+    row('End Date',   fmtDate(ev.end_date)),
+    ev.description ? `<div class="col-span-2">${row('About',ev.description)}</div>` : '',
+  ].join('');
+
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('profile').classList.remove('hidden');
+};
+
+const tryUnlockTeam = async () => {
+  const input = document.getElementById('gate-input');
+  const err   = document.getElementById('gate-err');
+  const btn   = document.getElementById('gate-btn');
+  const typed = input.value.trim();
+
+  if (!typed) {
+    err.textContent = 'Please enter team lead or member name.';
+    err.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+
+  try {
+    const res = await fetch(`/api/participants/${id}/unlock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: typed })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      sessionStorage.setItem(teamSessionKey, JSON.stringify(data));
+      err.classList.add('hidden');
+      renderTeam(data);
+    } else {
+      err.textContent = '✗ Incorrect name. Enter lead or member name.';
+      err.classList.remove('hidden');
+      input.classList.remove('shake');
+      void input.offsetWidth;
+      input.classList.add('shake');
+      input.select();
+    }
+  } catch (e) {
+    err.textContent = 'Verification error. Please try again.';
+    err.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Unlock Profile →';
+  }
+};
+
+const cachedTeam = sessionStorage.getItem(teamSessionKey);
+if (cachedTeam) {
+  try {
+    const data = JSON.parse(cachedTeam);
+    if (data && data.participant) renderTeam(data);
+  } catch (e) {
+    sessionStorage.removeItem(teamSessionKey);
+  }
+}
+</script>
+</body>
+</html>
