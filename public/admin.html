@@ -852,11 +852,23 @@ const saveEdit = async () => {
     amount:         $('e-amount').value.trim(),
     utr:            $('e-utr').value.trim(),
   };
-  const res = await fetch(`/api/participants/${editingId}`, {
-    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
-  });
-  if (!res.ok) { toast('Failed to save', 'err'); return; }
-  closeModal(); loadTable(); toast('✓ Changes saved!');
+  try {
+    const res = await fetch(`/api/participants/${editingId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast(data.error || 'Failed to save', 'err');
+      return;
+    }
+    closeModal();
+    loadTable();
+    toast('✓ Changes saved!');
+  } catch (err) {
+    toast('Network error saving changes', 'err');
+  }
 };
 
 const closeModal = () => {
