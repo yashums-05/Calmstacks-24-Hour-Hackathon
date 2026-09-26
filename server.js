@@ -135,7 +135,8 @@ app.get('/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOSt
 
 // ── Participant Member Specific Unlock & View ──────────────────────
 // Password verification: user must submit their registered name as password
-app.post('/api/members/:id/unlock', (req, res) => {
+app.post('/api/members/:id/unlock', async (req, res) => {
+  await db.sync();
   const result = db.getMember(req.params.id);
   if (!result || !result.member) return res.status(404).json({ error: 'Participant not found' });
 
@@ -160,7 +161,8 @@ app.post('/api/members/:id/unlock', (req, res) => {
   return res.status(401).json({ error: 'Incorrect password. Please enter the full name as registered.' });
 });
 
-app.get('/api/members/:id', (req, res) => {
+app.get('/api/members/:id', async (req, res) => {
+  await db.sync();
   const result = db.getMember(req.params.id);
   if (!result || !result.member) return res.status(404).json({ error: 'Member not found' });
   
@@ -182,7 +184,8 @@ app.get('/api/members/:id', (req, res) => {
 });
 
 // ── Team Specific Unlock & View ────────────────────────────────────
-app.post('/api/participants/:id/unlock', (req, res) => {
+app.post('/api/participants/:id/unlock', async (req, res) => {
+  await db.sync();
   const team = db.getTeam(req.params.id);
   if (!team) return res.status(404).json({ error: 'Team not found' });
   const members = db.getMembersForTeam(team.id);
@@ -210,7 +213,8 @@ app.post('/api/participants/:id/unlock', (req, res) => {
   return res.status(401).json({ error: 'Incorrect password. Please enter the team lead or member name.' });
 });
 
-app.get('/api/participants/:id', (req, res) => {
+app.get('/api/participants/:id', async (req, res) => {
+  await db.sync();
   const team = db.getTeam(req.params.id);
   if (!team) return res.status(404).json({ error: 'Team not found' });
   if (isAuthenticated(req)) {
@@ -229,27 +233,34 @@ app.get('/api/participants/:id', (req, res) => {
 
 // ── Admin-Only Directory & Management APIs (No Public Access) ──────
 // Only Admin can view all teams and all members
-app.get('/api/participants', requireAdmin, (req, res) => {
+app.get('/api/participants', requireAdmin, async (req, res) => {
+  await db.sync();
   const list = db.getTeams(req.query.search);
   res.json({ participants: list, total: list.length });
 });
 
-app.get('/api/members', requireAdmin, (req, res) => {
+app.get('/api/members', requireAdmin, async (req, res) => {
+  await db.sync();
   const list = db.getAllMembers(req.query.search);
   res.json({ members: list, total: list.length });
 });
 
-app.get('/api/event', (req, res) => res.json(db.getEvent() || {}));
-app.post('/api/event', requireAdmin, (req, res) => {
-  if (!req.body.name) return res.status(400).json({ error: 'Event name required' });
-  res.json(db.saveEvent(req.body));
+app.get('/api/event', async (req, res) => {
+  await db.sync();
+  res.json(db.getEvent() || {});
 });
 
-app.post('/api/participants', requireAdmin, (req, res) => {
+app.post('/api/event', requireAdmin, async (req, res) => {
+  if (!req.body.name) return res.status(400).json({ error: 'Event name required' });
+  const ev = await db.saveEvent(req.body);
+  res.json(ev);
+});
+
+app.post('/api/participants', requireAdmin, async (req, res) => {
   const { lead_name, email, team_name } = req.body;
   if (!lead_name || !email || !team_name)
     return res.status(400).json({ error: 'team_name, lead_name and email are required' });
-  const { team, members } = db.addTeam(req.body);
+  const { team, members } = await db.addTeam(req.body);
   res.status(201).json({
     ...team,
     profile_url: `${host(req)}/participants/${team.id}`,
@@ -260,34 +271,35 @@ app.post('/api/participants', requireAdmin, (req, res) => {
   });
 });
 
-app.put('/api/participants/:id', requireAdmin, (req, res) => {
-  const t = db.updateTeam(req.params.id, req.body);
+app.put('/api/participants/:id', requireAdmin, async (req, res) => {
+  const t = await db.updateTeam(req.params.id, req.body);
   if (!t) return res.status(404).json({ error: 'Not found' });
   res.json({ ...t, profile_url: `${host(req)}/participants/${t.id}` });
 });
 
-app.delete('/api/participants/:id', requireAdmin, (req, res) => {
-  const r = db.deleteTeam(req.params.id);
+app.delete('/api/participants/:id', requireAdmin, async (req, res) => {
+  const r = await db.deleteTeam(req.params.id);
   if (!r.deleted) return res.status(404).json({ error: 'Not found' });
   res.json({ success: true });
 });
 
-app.put('/api/members/:id', requireAdmin, (req, res) => {
-  const m = db.updateMember(req.params.id, req.body);
+app.put('/api/members/:id', requireAdmin, async (req, res) => {
+  const m = await db.updateMember(req.params.id, req.body);
   if (!m) return res.status(404).json({ error: 'Not found' });
   res.json({ ...m, profile_url: `${host(req)}/participants/${m.id}` });
 });
 
-app.post('/api/members', requireAdmin, (req, res) => {
+app.post('/api/members', requireAdmin, async (req, res) => {
   const { team_id, name, usn, role } = req.body;
   if (!team_id || !name) return res.status(400).json({ error: 'team_id and name are required' });
   const team = db.getTeam(team_id);
   if (!team) return res.status(404).json({ error: 'Team not found' });
-  const m = db.addMember({ team_id, name, usn: usn || '', role: role || 'Member', registered_at: new Date().toLocaleString('en-IN') });
+  const m = await db.addMember({ team_id, name, usn: usn || '', role: role || 'Member', registered_at: new Date().toLocaleString('en-IN') });
   res.status(201).json({ ...m, profile_url: `${host(req)}/participants/${m.id}` });
 });
 
-app.get('/api/export', requireAdmin, (req, res) => {
+app.get('/api/export', requireAdmin, async (req, res) => {
+  await db.sync();
   res.setHeader('Content-Disposition', `attachment; filename="hackathon-${Date.now()}.json"`);
   res.json(db.exportAll());
 });

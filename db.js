@@ -153,10 +153,8 @@ let inMemoryMembers = [];
 let inMemoryEvent   = defaultData.event || null;
 let lastSha         = null;
 let lastFetchTime   = 0;
-let isSyncing       = false;
 
 function initLocalStore() {
-  // Try /tmp store
   if (fs.existsSync(TMP_STORE_JSON)) {
     try {
       const parsed = JSON.parse(fs.readFileSync(TMP_STORE_JSON, 'utf8'));
@@ -169,15 +167,12 @@ function initLocalStore() {
     } catch (e) {}
   }
 
-  // Try /tmp CSVs
   let teams = readCSVFile(TMP_TEAMS_CSV, TEAM_COLS);
   let members = readCSVFile(TMP_MEMBERS_CSV, MEMBER_COLS);
 
-  // Try local repo CSVs
   if (!teams.length) teams = readCSVFile(TEAMS_CSV, TEAM_COLS);
   if (!members.length) members = readCSVFile(MEMBERS_CSV, MEMBER_COLS);
 
-  // Try bundled dataset
   if (!teams.length && defaultData.teams?.length) teams = [...defaultData.teams];
   if (!members.length && defaultData.members?.length) members = [...defaultData.members];
 
@@ -202,7 +197,7 @@ function githubRequest(endpoint, method = 'GET', body = null) {
         'Accept': 'application/vnd.github.v3+json',
         ...(payload ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {})
       },
-      timeout: 6000
+      timeout: 8000
     }, res => {
       let data = '';
       res.on('data', chunk => data += chunk);
@@ -223,7 +218,7 @@ function githubRequest(endpoint, method = 'GET', body = null) {
 
 async function fetchRemoteStore(force = false) {
   const now = Date.now();
-  if (!force && (now - lastFetchTime < 10000)) return; // 10s memory cache
+  if (!force && (now - lastFetchTime < 3000)) return; // 3s cache
   lastFetchTime = now;
 
   try {
@@ -236,7 +231,6 @@ async function fetchRemoteStore(force = false) {
         inMemoryTeams   = parsed.teams;
         inMemoryMembers = parsed.members || inMemoryTeams.flatMap(membersFromTeam);
         inMemoryEvent   = parsed.event   || inMemoryEvent;
-        // Cache to /tmp
         try { fs.writeFileSync(TMP_STORE_JSON, jsonStr, 'utf8'); } catch (e) {}
       }
     }
@@ -244,7 +238,6 @@ async function fetchRemoteStore(force = false) {
 }
 
 async function persistStore() {
-  // 1. Write to /tmp cache immediately
   const jsonStr = JSON.stringify({
     teams: inMemoryTeams,
     members: inMemoryMembers,
@@ -256,12 +249,8 @@ async function persistStore() {
   writeCSVFile(TEAMS_CSV, TEAM_COLS, inMemoryTeams, TMP_TEAMS_CSV);
   writeCSVFile(MEMBERS_CSV, MEMBER_COLS, inMemoryMembers, TMP_MEMBERS_CSV);
 
-  // 2. Sync to GitHub in background
-  if (isSyncing) return;
-  isSyncing = true;
-
+  // Sync to GitHub and wait for confirmation
   try {
-    // If we don't have lastSha, fetch it first
     if (!lastSha) {
       const getRes = await githubRequest(REMOTE_PATH);
       if (getRes.status === 200 && getRes.data?.sha) {
@@ -279,8 +268,8 @@ async function persistStore() {
     const putRes = await githubRequest(REMOTE_PATH, 'PUT', putBody);
     if (putRes.status === 200 || putRes.status === 201) {
       lastSha = putRes.data?.content?.sha || putRes.data?.commit?.sha || null;
+      return true;
     } else if (putRes.status === 409) {
-      // Conflict: refetch latest sha and retry once
       const getRes = await githubRequest(REMOTE_PATH);
       if (getRes.status === 200 && getRes.data?.sha) {
         lastSha = getRes.data.sha;
@@ -288,42 +277,40 @@ async function persistStore() {
         const retryRes = await githubRequest(REMOTE_PATH, 'PUT', putBody);
         if (retryRes.status === 200 || retryRes.status === 201) {
           lastSha = retryRes.data?.content?.sha || retryRes.data?.commit?.sha || null;
+          return true;
         }
       }
     }
-  } catch (e) {
-  } finally {
-    isSyncing = false;
-  }
+  } catch (e) {}
+  return false;
 }
 
-// Initial remote fetch in background
+// Initial remote fetch
 fetchRemoteStore(true).catch(() => {});
 
 // ── Exported API ───────────────────────────────────────────────────
 module.exports = {
 
   // ── Sync Helper ─────────────────────────────────────────────────
-  refresh() {
-    return fetchRemoteStore(true);
+  async sync(force = false) {
+    await fetchRemoteStore(force);
+    return true;
   },
 
   // ── Event ───────────────────────────────────────────────────────
   getEvent() {
-    fetchRemoteStore().catch(() => {});
     return inMemoryEvent;
   },
 
-  saveEvent(data) {
+  async saveEvent(data) {
     const ev = { ...data, updated_at: new Date().toISOString() };
     inMemoryEvent = ev;
-    persistStore().catch(() => {});
+    await persistStore();
     return ev;
   },
 
   // ── Teams ────────────────────────────────────────────────────────
   getTeams(search) {
-    fetchRemoteStore().catch(() => {});
     const rows = inMemoryTeams;
     if (!search?.trim()) return rows;
     const q = search.trim().toLowerCase();
@@ -337,12 +324,12 @@ module.exports = {
 
   getTeam(id) {
     if (!id) return null;
-    fetchRemoteStore().catch(() => {});
     const cleanId = String(id).trim().toLowerCase();
     return inMemoryTeams.find(r => r.id && r.id.toLowerCase() === cleanId) || null;
   },
 
-  addTeam(data) {
+  async addTeam(data) {
+    await fetchRemoteStore();
     const hackId = nextTeamId(inMemoryTeams);
     const team = {
       id:             hackId,
@@ -369,11 +356,12 @@ module.exports = {
     const newMembers = membersFromTeam(team);
     inMemoryMembers.push(...newMembers);
 
-    persistStore().catch(() => {});
+    await persistStore();
     return { team, members: newMembers };
   },
 
-  updateTeam(id, data) {
+  async updateTeam(id, data) {
+    await fetchRemoteStore();
     const targetId = String(id).trim().toLowerCase();
     const idx = inMemoryTeams.findIndex(r => r.id && r.id.toLowerCase() === targetId);
     if (idx === -1) return null;
@@ -385,31 +373,30 @@ module.exports = {
     const newMembers   = membersFromTeam(inMemoryTeams[idx]);
     inMemoryMembers = [...otherMembers, ...newMembers];
 
-    persistStore().catch(() => {});
+    await persistStore();
     return inMemoryTeams[idx];
   },
 
-  deleteTeam(id) {
+  async deleteTeam(id) {
+    await fetchRemoteStore();
     const targetId = String(id).trim().toLowerCase();
     const after = inMemoryTeams.filter(r => r.id && r.id.toLowerCase() !== targetId);
     if (after.length === inMemoryTeams.length) return { deleted: 0 };
     inMemoryTeams = after;
     inMemoryMembers = inMemoryMembers.filter(m => m.team_id.toLowerCase() !== targetId);
 
-    persistStore().catch(() => {});
+    await persistStore();
     return { deleted: 1 };
   },
 
   // ── Members ──────────────────────────────────────────────────────
   getMembersForTeam(teamId) {
     if (!teamId) return [];
-    fetchRemoteStore().catch(() => {});
     const tId = String(teamId).trim().toLowerCase();
     return inMemoryMembers.filter(m => m.team_id && m.team_id.toLowerCase() === tId);
   },
 
   getAllMembers(search) {
-    fetchRemoteStore().catch(() => {});
     const rows = inMemoryMembers;
     if (!search?.trim()) return rows;
     const q = search.trim().toLowerCase();
@@ -421,7 +408,6 @@ module.exports = {
 
   getMember(id) {
     if (!id) return null;
-    fetchRemoteStore().catch(() => {});
     const cleanId = String(id).trim().toLowerCase();
     const member = inMemoryMembers.find(m => m.id && m.id.toLowerCase() === cleanId) || null;
     if (!member) return null;
@@ -431,17 +417,19 @@ module.exports = {
     return { member, team, teammates, event };
   },
 
-  updateMember(id, data) {
+  async updateMember(id, data) {
+    await fetchRemoteStore();
     const cleanId = String(id).trim().toLowerCase();
     const idx = inMemoryMembers.findIndex(m => m.id && m.id.toLowerCase() === cleanId);
     if (idx === -1) return null;
     inMemoryMembers[idx] = { ...inMemoryMembers[idx], ...data, id: inMemoryMembers[idx].id };
 
-    persistStore().catch(() => {});
+    await persistStore();
     return inMemoryMembers[idx];
   },
 
-  addMember(data) {
+  async addMember(data) {
+    await fetchRemoteStore();
     const tId = String(data.team_id || '').trim().toLowerCase();
     const teamMembers = inMemoryMembers.filter(m => m.team_id && m.team_id.toLowerCase() === tId);
     const nextNum = teamMembers.length + 1;
@@ -456,7 +444,7 @@ module.exports = {
       registered_at: data.registered_at || new Date().toLocaleString('en-IN'),
     };
     inMemoryMembers.push(m);
-    persistStore().catch(() => {});
+    await persistStore();
     return m;
   },
 
