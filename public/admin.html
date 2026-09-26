@@ -137,6 +137,9 @@
     <button class="nav-link" onclick="showSection('event',this)" id="nav-event">
       <span class="icon">⚙</span> Event Setup
     </button>
+    <button class="nav-link" onclick="showSection('admins',this)" id="nav-admins">
+      <span class="icon">👑</span> Admins
+    </button>
     <div class="mt-auto pt-4 border-t border-slate-100">
       <p class="text-slate-400 text-xs px-1 font-semibold">CalmStacks Database</p>
       <p class="text-slate-500 text-xs px-1 mt-0.5 font-mono">data/participants.csv</p>
@@ -514,6 +517,78 @@
       </div>
     </section>
 
+    <!-- ══════════════════════════════════════════════════
+         SECTION: ADMIN ACCOUNTS MANAGEMENT
+    ══════════════════════════════════════════════════ -->
+    <section id="sec-admins" class="hidden">
+      <div class="mb-5">
+        <h2 class="text-lg font-bold text-slate-900">Admin Accounts Management</h2>
+        <p class="text-slate-500 text-sm mt-1">Authorized organizers with admin dashboard login access.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- LEFT: Add Admin Form -->
+        <div class="section-card space-y-4">
+          <h3 class="font-bold text-slate-900 text-sm">Add New Admin Account</h3>
+          
+          <div>
+            <label class="lbl">User ID (Login Username) *</label>
+            <input id="adm-uid" class="inp font-mono" placeholder="e.g. organizer_john" autocomplete="off" />
+          </div>
+
+          <div>
+            <label class="lbl">Password *</label>
+            <input id="adm-pass" type="password" class="inp" placeholder="Enter secure password" autocomplete="new-password" />
+          </div>
+
+          <div>
+            <label class="lbl">Full Name</label>
+            <input id="adm-name" class="inp" placeholder="e.g. John Doe" />
+          </div>
+
+          <div>
+            <label class="lbl">Role</label>
+            <select id="adm-role" class="inp">
+              <option value="Organizer">Organizer</option>
+              <option value="Co-Organizer">Co-Organizer</option>
+              <option value="Faculty Coordinator">Faculty Coordinator</option>
+              <option value="Student Coordinator">Student Coordinator</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+
+          <button onclick="createAdmin()" class="btn btn-primary w-full py-2.5">
+            ➕ Add Admin Account
+          </button>
+        </div>
+
+        <!-- RIGHT: Admin Accounts Table -->
+        <div class="lg:col-span-2 section-card space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-slate-900 text-sm">Active Admins</h3>
+            <span id="adm-count" class="pill" style="background:#f0f9ff;color:#0284c7;border:1px solid #bae6fd">1 Admin</span>
+          </div>
+
+          <div class="overflow-x-auto rounded-lg border border-slate-200">
+            <table>
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Name</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th class="text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="adm-tbody">
+                <!-- dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -601,12 +676,89 @@ const cp = (text, label='Text') =>
 
 // ── Sidebar nav ───────────────────────────────────────────────────
 const showSection = (name, btn) => {
-  ['add','manage','member','event'].forEach(s => $('sec-'+s).classList.add('hidden'));
+  ['add','manage','member','event','admins'].forEach(s => $('sec-'+s).classList.add('hidden'));
   document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
   $('sec-'+name).classList.remove('hidden');
   btn.classList.add('active');
   if (name === 'manage') loadTable();
   if (name === 'member') loadTeamDropdown();
+  if (name === 'admins') loadAdmins();
+};
+
+// ── Admin Management ───────────────────────────────────────────────
+const loadAdmins = async () => {
+  try {
+    const res = await fetch('/api/admins');
+    const data = await res.json();
+    const list = data.admins || [];
+    $('adm-count').textContent = `${list.length} Admin${list.length !== 1 ? 's' : ''}`;
+    $('adm-tbody').innerHTML = list.map(a => {
+      const isPrimary = a.userid === 'yashu';
+      return `
+        <tr>
+          <td class="font-mono font-bold text-sky-600">${esc(a.userid)}</td>
+          <td class="font-bold text-slate-800">${esc(a.name || a.userid)}</td>
+          <td><span class="pill" style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0">${esc(a.role || 'Admin')}</span></td>
+          <td class="text-xs text-slate-500 font-medium">${esc(a.created_at || 'Active')}</td>
+          <td class="text-right">
+            ${isPrimary 
+              ? '<span class="text-[0.7rem] font-bold text-slate-400 font-mono">Primary</span>' 
+              : `<button onclick="removeAdmin('${esc(a.userid)}')" class="btn btn-danger btn-sm py-1 px-2.5">🗑 Remove</button>`
+            }
+          </td>
+        </tr>`;
+    }).join('');
+  } catch (err) {
+    toast('Failed to load admin accounts', 'err');
+  }
+};
+
+const createAdmin = async () => {
+  const userid = $('adm-uid').value.trim();
+  const password = $('adm-pass').value;
+  const name = $('adm-name').value.trim();
+  const role = $('adm-role').value;
+
+  if (!userid || !password) {
+    toast('User ID and Password are required', 'err');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/admins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userid, password, name, role })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      toast('✓ Admin account added successfully!');
+      $('adm-uid').value = '';
+      $('adm-pass').value = '';
+      $('adm-name').value = '';
+      loadAdmins();
+    } else {
+      toast(data.error || 'Failed to add admin', 'err');
+    }
+  } catch (err) {
+    toast('Network error adding admin', 'err');
+  }
+};
+
+const removeAdmin = async (userid) => {
+  if (!confirm(`Are you sure you want to remove admin "${userid}"?`)) return;
+  try {
+    const res = await fetch(`/api/admins/${encodeURIComponent(userid)}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      toast('✓ Admin removed');
+      loadAdmins();
+    } else {
+      toast(data.error || 'Failed to remove admin', 'err');
+    }
+  } catch (err) {
+    toast('Network error', 'err');
+  }
 };
 
 // ── Event ─────────────────────────────────────────────────────────

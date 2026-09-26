@@ -61,7 +61,7 @@ function verifyToken(token) {
   const parts = token.split('.');
   if (parts.length !== 3) return false;
   const [user, ts, sig] = parts;
-  if (user !== AUTH_USER) return false;
+  if (!user) return false;
   
   // 7 days expiration
   const tokenAge = Date.now() - parseInt(ts, 10);
@@ -81,6 +81,16 @@ function getCookie(req, name) {
 function isAuthenticated(req) {
   const token = getCookie(req, 'auth_session') || req.headers['x-auth-token'];
   return verifyToken(token);
+}
+
+function getAuthUser(req) {
+  const token = getCookie(req, 'auth_session') || req.headers['x-auth-token'];
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const [user, ts, sig] = parts;
+  const expectedSig = crypto.createHmac('sha256', AUTH_SECRET).update(`${user}:${ts}`).digest('hex');
+  return sig === expectedSig ? user : null;
 }
 
 function requireAdmin(req, res, next) {
@@ -107,14 +117,16 @@ app.get('/login', (req, res) => {
   return sendHtml(res, 'login.html');
 });
 
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
+  await db.sync();
   const { userid, username, password } = req.body || {};
   const user = (userid || username || '').trim();
   
-  if (user === AUTH_USER && password === AUTH_PASS) {
-    const token = generateToken(user);
+  const admin = db.verifyAdmin(user, password);
+  if (admin) {
+    const token = generateToken(admin.userid);
     res.setHeader('Set-Cookie', `auth_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`);
-    return res.json({ success: true, user: AUTH_USER, token });
+    return res.json({ success: true, user: admin.userid, name: admin.name, role: admin.role, token });
   }
   return res.status(401).json({ error: 'Invalid user ID or password' });
 });
@@ -126,9 +138,28 @@ app.post('/api/logout', (req, res) => {
 
 app.get('/api/auth/me', (req, res) => {
   if (isAuthenticated(req)) {
-    return res.json({ authenticated: true, user: AUTH_USER });
+    const user = getAuthUser(req) || 'admin';
+    return res.json({ authenticated: true, user });
   }
   return res.json({ authenticated: false });
+});
+
+// ── Admin Accounts Management Endpoints ────────────────────────────
+app.get('/api/admins', requireAdmin, async (req, res) => {
+  await db.sync();
+  res.json({ admins: db.getAdmins() });
+});
+
+app.post('/api/admins', requireAdmin, async (req, res) => {
+  const result = await db.addAdmin(req.body);
+  if (result.error) return res.status(400).json({ error: result.error });
+  res.status(201).json(result);
+});
+
+app.delete('/api/admins/:userid', requireAdmin, async (req, res) => {
+  const result = await db.deleteAdmin(req.params.userid);
+  if (result.error) return res.status(400).json({ error: result.error });
+  res.json(result);
 });
 
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));

@@ -1,5 +1,5 @@
 /**
- * db.js — Persistent Data Store with GitHub Cloud Auto-Sync & Memory Cache
+ * db.js — Persistent Data Store with GitHub Cloud Auto-Sync, Memory Cache & Multi-Admin Management
  *
  * ID Formats:
  *   Team ID   : HACK-001, HACK-002, ...
@@ -11,7 +11,7 @@ const path  = require('node:path');
 const os    = require('node:os');
 const https = require('node:https');
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || Buffer.from('Z2hwX1VyM2M3ZVBwbTlsYXZicGp6YzA4OFdwem5uNWFTVzA4UTVFVCA=', 'base64').toString('utf8').trim();
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
 const GITHUB_REPO  = process.env.GITHUB_REPO  || 'yashums-05/Calmstacks-24-Hour-Hackathon';
 const REMOTE_PATH  = '/contents/data/store.json';
 
@@ -37,6 +37,15 @@ const TMP_TEAMS_CSV  = path.join(TMP_DATA_DIR, 'participants.csv');
 const TMP_MEMBERS_CSV= path.join(TMP_DATA_DIR, 'members.csv');
 const TMP_EVENT_JSON = path.join(TMP_DATA_DIR, 'event.json');
 const TMP_STORE_JSON = path.join(TMP_DATA_DIR, 'store.json');
+
+// ── Default Primary Admin ──────────────────────────────────────────
+const PRIMARY_ADMIN = {
+  userid:     'yashu',
+  password:   'Yashu@2005',
+  name:       'Yashwanth M S',
+  role:       'Super Admin',
+  created_at: 'Primary Admin'
+};
 
 // ── CSV helpers ────────────────────────────────────────────────────
 function parseLine(line) {
@@ -150,6 +159,7 @@ function membersFromTeam(team) {
 // ── In-Memory Store & State ─────────────────────────────────────────
 let inMemoryTeams   = [];
 let inMemoryMembers = [];
+let inMemoryAdmins  = [PRIMARY_ADMIN];
 let inMemoryEvent   = defaultData.event || null;
 let lastSha         = null;
 let lastFetchTime   = 0;
@@ -162,6 +172,9 @@ function initLocalStore() {
         inMemoryTeams   = parsed.teams;
         inMemoryMembers = parsed.members || [];
         inMemoryEvent   = parsed.event   || inMemoryEvent;
+        if (parsed.admins && Array.isArray(parsed.admins)) {
+          inMemoryAdmins = parsed.admins;
+        }
         return;
       }
     } catch (e) {}
@@ -184,7 +197,7 @@ initLocalStore();
 
 // ── GitHub API Sync ────────────────────────────────────────────────
 function githubRequest(endpoint, method = 'GET', body = null) {
-  if (!GITHUB_TOKEN) return Promise.resolve({ status: 500, error: 'No token' });
+  if (!GITHUB_TOKEN) return Promise.resolve({ status: 500, error: 'No token configured' });
   return new Promise((resolve) => {
     const payload = body ? JSON.stringify(body) : null;
     const req = https.request({
@@ -217,6 +230,7 @@ function githubRequest(endpoint, method = 'GET', body = null) {
 }
 
 async function fetchRemoteStore(force = false) {
+  if (!GITHUB_TOKEN) return;
   const now = Date.now();
   if (!force && (now - lastFetchTime < 3000)) return; // 3s cache
   lastFetchTime = now;
@@ -231,6 +245,11 @@ async function fetchRemoteStore(force = false) {
         inMemoryTeams   = parsed.teams;
         inMemoryMembers = parsed.members || inMemoryTeams.flatMap(membersFromTeam);
         inMemoryEvent   = parsed.event   || inMemoryEvent;
+        if (parsed.admins && Array.isArray(parsed.admins)) {
+          // Ensure primary admin always exists
+          const hasPrimary = parsed.admins.some(a => a.userid === PRIMARY_ADMIN.userid);
+          inMemoryAdmins = hasPrimary ? parsed.admins : [PRIMARY_ADMIN, ...parsed.admins];
+        }
         try { fs.writeFileSync(TMP_STORE_JSON, jsonStr, 'utf8'); } catch (e) {}
       }
     }
@@ -241,6 +260,7 @@ async function persistStore() {
   const jsonStr = JSON.stringify({
     teams: inMemoryTeams,
     members: inMemoryMembers,
+    admins: inMemoryAdmins,
     event: inMemoryEvent,
     updated_at: new Date().toISOString()
   }, null, 2);
@@ -248,6 +268,8 @@ async function persistStore() {
   try { fs.writeFileSync(TMP_STORE_JSON, jsonStr, 'utf8'); } catch (e) {}
   writeCSVFile(TEAMS_CSV, TEAM_COLS, inMemoryTeams, TMP_TEAMS_CSV);
   writeCSVFile(MEMBERS_CSV, MEMBER_COLS, inMemoryMembers, TMP_MEMBERS_CSV);
+
+  if (!GITHUB_TOKEN) return true;
 
   // Sync to GitHub and wait for confirmation
   try {
@@ -295,6 +317,58 @@ module.exports = {
   async sync(force = false) {
     await fetchRemoteStore(force);
     return true;
+  },
+
+  // ── Admins ──────────────────────────────────────────────────────
+  getAdmins() {
+    return inMemoryAdmins.map(a => ({
+      userid:     a.userid,
+      name:       a.name || a.userid,
+      role:       a.role || 'Admin',
+      created_at: a.created_at || 'Active'
+    }));
+  },
+
+  verifyAdmin(userid, password) {
+    const u = String(userid || '').trim();
+    const p = String(password || '');
+    if (u === PRIMARY_ADMIN.userid && p === PRIMARY_ADMIN.password) {
+      return PRIMARY_ADMIN;
+    }
+    const found = inMemoryAdmins.find(a => a.userid === u && a.password === p);
+    return found || null;
+  },
+
+  async addAdmin({ userid, password, name, role }) {
+    await fetchRemoteStore();
+    const cleanUser = String(userid || '').trim();
+    if (!cleanUser || !password) return { error: 'User ID and password required' };
+    if (inMemoryAdmins.some(a => a.userid.toLowerCase() === cleanUser.toLowerCase())) {
+      return { error: 'Admin with this User ID already exists' };
+    }
+    const newAdmin = {
+      userid:     cleanUser,
+      password:   String(password),
+      name:       name || cleanUser,
+      role:       role || 'Admin',
+      created_at: new Date().toLocaleDateString('en-IN')
+    };
+    inMemoryAdmins.push(newAdmin);
+    await persistStore();
+    return { success: true, admin: { userid: newAdmin.userid, name: newAdmin.name, role: newAdmin.role } };
+  },
+
+  async deleteAdmin(userid) {
+    await fetchRemoteStore();
+    const cleanUser = String(userid || '').trim().toLowerCase();
+    if (cleanUser === PRIMARY_ADMIN.userid.toLowerCase()) {
+      return { error: 'Cannot remove primary super admin' };
+    }
+    const before = inMemoryAdmins.length;
+    inMemoryAdmins = inMemoryAdmins.filter(a => a.userid.toLowerCase() !== cleanUser);
+    if (inMemoryAdmins.length === before) return { error: 'Admin not found' };
+    await persistStore();
+    return { success: true };
   },
 
   // ── Event ───────────────────────────────────────────────────────
@@ -366,7 +440,8 @@ module.exports = {
     const idx = inMemoryTeams.findIndex(r => r.id && r.id.toLowerCase() === targetId);
     if (idx === -1) return null;
     const old = inMemoryTeams[idx];
-    inMemoryTeams[idx] = { ...old, ...data, id: old.id };
+    const teams_updated = { ...old, ...data, id: old.id };
+    inMemoryTeams[idx] = teams_updated;
 
     // Re-sync member rows for this team
     const otherMembers = inMemoryMembers.filter(m => m.team_id.toLowerCase() !== old.id.toLowerCase());
@@ -454,6 +529,7 @@ module.exports = {
       event:        inMemoryEvent,
       participants: inMemoryTeams,
       members:      inMemoryMembers,
+      admins:       this.getAdmins(),
       exported_at:  new Date().toISOString(),
     };
   },
